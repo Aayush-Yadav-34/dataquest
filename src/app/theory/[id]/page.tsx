@@ -30,7 +30,7 @@ export default function TheoryTopicPage() {
     const params = useParams();
     const router = useRouter();
     const topicId = params.id as string;
-    const { updateXP, addActivity } = useUserStore();
+    const { addXP, addActivity } = useUserStore();
 
     const topic = mockTopics.find((t) => t.id === topicId);
     const theoryModule = mockTheoryModules[topicId];
@@ -59,14 +59,12 @@ export default function TheoryTopicPage() {
 
         // Show XP animation
         setShowXPAnimation(true);
-        updateXP(topic.xpReward);
+        addXP(topic.xpReward);
         addActivity({
-            id: Date.now().toString(),
             type: 'theory',
             title: `Completed ${topic.title}`,
             description: `Mastered the ${topic.title} module`,
             xpEarned: topic.xpReward,
-            timestamp: new Date(),
         });
 
         toast.success('Topic Completed!', {

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +16,7 @@ import { cn } from '@/lib/utils';
 
 export default function RegisterPage() {
     const router = useRouter();
-    const { register, loginWithGoogle, isAuthenticated, isLoading } = useUserStore();
+    const { isAuthenticated, isLoading } = useUserStore();
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -56,28 +57,39 @@ export default function RegisterPage() {
         }
 
         setIsSubmitting(true);
-        const result = await register(username, email, password);
 
-        if (result.success) {
-            toast.success('Account created!', {
-                description: 'Welcome to DataQuest. Let\'s start learning!',
+        try {
+            // Call registration API
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password }),
             });
-            router.push('/dashboard');
-        } else {
-            setError(result.error || 'Registration failed');
+
+            const data = await response.json();
+
+            if (response.ok) {
+                toast.success('Account created!', {
+                    description: 'Please login with your credentials.',
+                });
+                router.push('/login');
+            } else {
+                setError(data.error || 'Registration failed');
+                setIsSubmitting(false);
+            }
+        } catch (err) {
+            setError('Registration failed. Please try again.');
             setIsSubmitting(false);
         }
     };
 
     const handleGoogleLogin = async () => {
         setIsSubmitting(true);
-        const result = await loginWithGoogle();
-
-        if (result.success) {
-            toast.success('Account created!', {
-                description: 'Welcome to DataQuest. Let\'s start learning!',
-            });
-            router.push('/dashboard');
+        try {
+            await signIn('google', { callbackUrl: '/dashboard' });
+        } catch (err) {
+            toast.error('Failed to sign up with Google');
+            setIsSubmitting(false);
         }
     };
 

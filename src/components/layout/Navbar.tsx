@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { useSession, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -47,9 +48,32 @@ const navLinks = [
 export function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
-    const { profile, isAuthenticated, logout } = useUserStore();
+    const { data: session, status } = useSession();
+    const { profile, logout: storeLogout, isAuthenticated: storeAuth } = useUserStore();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // Combined auth check - either NextAuth session or Zustand store
+    const isAuthenticated = status === 'authenticated' || storeAuth;
+
+    // Get user info from session or store
+    const user = session?.user ? {
+        username: session.user.username || session.user.name || 'User',
+        email: session.user.email || '',
+        avatar: session.user.image,
+        role: session.user.role || 'user',
+        xp: session.user.xp || profile?.xp || 0,
+        level: session.user.level || profile?.level || 1,
+        streak: session.user.streak || profile?.streak || 0,
+    } : profile ? {
+        username: profile.username,
+        email: profile.email,
+        avatar: profile.avatar,
+        role: profile.role,
+        xp: profile.xp,
+        level: profile.level,
+        streak: profile.streak,
+    } : null;
 
     useEffect(() => {
         const handleScroll = () => {
@@ -59,8 +83,15 @@ export function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        // Clear Zustand store
+        storeLogout();
+
+        // Sign out from NextAuth if there's a session
+        if (status === 'authenticated') {
+            await signOut({ redirect: false });
+        }
+
         toast.success('Logged out', {
             description: 'You have been successfully logged out.',
         });
@@ -68,10 +99,10 @@ export function Navbar() {
     };
 
     // Calculate XP progress to next level
-    const xpForCurrentLevel = profile ? ((profile.level - 1) ** 2) * 100 : 0;
-    const xpForNextLevel = profile ? (profile.level ** 2) * 100 : 100;
-    const xpProgress = profile
-        ? ((profile.xp - xpForCurrentLevel) / (xpForNextLevel - xpForCurrentLevel)) * 100
+    const xpForCurrentLevel = user ? ((user.level - 1) ** 2) * 100 : 0;
+    const xpForNextLevel = user ? (user.level ** 2) * 100 : 100;
+    const xpProgress = user
+        ? ((user.xp - xpForCurrentLevel) / (xpForNextLevel - xpForCurrentLevel)) * 100
         : 0;
 
     return (
@@ -123,7 +154,7 @@ export function Navbar() {
                                 );
                             })}
                             {/* Admin Link */}
-                            {profile?.role === 'admin' && (
+                            {user?.role === 'admin' && (
                                 <Link href="/admin">
                                     <Button
                                         variant="ghost"
@@ -143,24 +174,24 @@ export function Navbar() {
 
                     {/* Right Section */}
                     <div className="flex items-center gap-4">
-                        {isAuthenticated && profile ? (
+                        {isAuthenticated && user ? (
                             <>
                                 {/* Streak */}
                                 <div className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-orange-500/10 text-orange-500">
                                     <Flame className="w-4 h-4" />
-                                    <span className="text-sm font-bold">{profile.streak}</span>
+                                    <span className="text-sm font-bold">{user.streak}</span>
                                 </div>
 
                                 {/* XP Progress */}
                                 <div className="hidden lg:flex items-center gap-3 px-4 py-2 rounded-full bg-muted/50">
                                     <div className="flex items-center gap-1.5 text-primary">
                                         <Zap className="w-4 h-4" />
-                                        <span className="text-sm font-semibold">{profile.xp.toLocaleString()} XP</span>
+                                        <span className="text-sm font-semibold">{user.xp.toLocaleString()} XP</span>
                                     </div>
                                     <div className="w-24">
                                         <Progress value={xpProgress} className="h-1.5" />
                                     </div>
-                                    <span className="text-xs text-muted-foreground">Lv. {profile.level}</span>
+                                    <span className="text-xs text-muted-foreground">Lv. {user.level}</span>
                                 </div>
 
                                 {/* User Menu */}
@@ -168,9 +199,9 @@ export function Navbar() {
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                                             <Avatar className="h-10 w-10 border-2 border-primary/50">
-                                                <AvatarImage src={profile.avatar} />
+                                                <AvatarImage src={user.avatar} />
                                                 <AvatarFallback className="bg-gradient-primary text-white">
-                                                    {profile.username.slice(0, 2).toUpperCase()}
+                                                    {user.username.slice(0, 2).toUpperCase()}
                                                 </AvatarFallback>
                                             </Avatar>
                                         </Button>
@@ -178,9 +209,9 @@ export function Navbar() {
                                     <DropdownMenuContent className="w-56" align="end">
                                         <DropdownMenuLabel>
                                             <div className="flex flex-col space-y-1">
-                                                <p className="text-sm font-medium">{profile.username}</p>
-                                                <p className="text-xs text-muted-foreground">{profile.email}</p>
-                                                {profile.role === 'admin' && (
+                                                <p className="text-sm font-medium">{user.username}</p>
+                                                <p className="text-xs text-muted-foreground">{user.email}</p>
+                                                {user.role === 'admin' && (
                                                     <span className="inline-flex items-center gap-1 text-xs text-amber-500">
                                                         <Shield className="w-3 h-3" />
                                                         Administrator
@@ -201,7 +232,7 @@ export function Navbar() {
                                                 My Progress
                                             </Link>
                                         </DropdownMenuItem>
-                                        {profile.role === 'admin' && (
+                                        {user.role === 'admin' && (
                                             <DropdownMenuItem asChild>
                                                 <Link href="/admin" className="flex items-center cursor-pointer text-amber-500">
                                                     <Shield className="mr-2 h-4 w-4" />
@@ -238,14 +269,14 @@ export function Navbar() {
                                             {/* User Info */}
                                             <div className="flex items-center gap-3 pb-6 border-b">
                                                 <Avatar className="h-12 w-12 border-2 border-primary/50">
-                                                    <AvatarImage src={profile.avatar} />
+                                                    <AvatarImage src={user.avatar} />
                                                     <AvatarFallback className="bg-gradient-primary text-white">
-                                                        {profile.username.slice(0, 2).toUpperCase()}
+                                                        {user.username.slice(0, 2).toUpperCase()}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div>
-                                                    <p className="font-semibold">{profile.username}</p>
-                                                    <p className="text-sm text-muted-foreground">Level {profile.level}</p>
+                                                    <p className="font-semibold">{user.username}</p>
+                                                    <p className="text-sm text-muted-foreground">Level {user.level}</p>
                                                 </div>
                                             </div>
 
@@ -253,12 +284,12 @@ export function Navbar() {
                                             <div className="flex gap-4 py-4 border-b">
                                                 <div className="flex items-center gap-2 text-primary">
                                                     <Zap className="w-4 h-4" />
-                                                    <span className="font-semibold">{profile.xp.toLocaleString()}</span>
+                                                    <span className="font-semibold">{user.xp.toLocaleString()}</span>
                                                     <span className="text-xs text-muted-foreground">XP</span>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-orange-500">
                                                     <Flame className="w-4 h-4" />
-                                                    <span className="font-semibold">{profile.streak}</span>
+                                                    <span className="font-semibold">{user.streak}</span>
                                                     <span className="text-xs text-muted-foreground">Streak</span>
                                                 </div>
                                             </div>
@@ -286,7 +317,7 @@ export function Navbar() {
                                                         </Link>
                                                     );
                                                 })}
-                                                {profile.role === 'admin' && (
+                                                {user.role === 'admin' && (
                                                     <Link
                                                         href="/admin"
                                                         onClick={() => setIsMobileMenuOpen(false)}

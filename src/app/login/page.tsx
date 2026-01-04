@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +15,7 @@ import { useUserStore } from '@/store/userStore';
 
 export default function LoginPage() {
     const router = useRouter();
-    const { login, loginWithGoogle, isAuthenticated, isLoading } = useUserStore();
+    const { login, isAuthenticated, isLoading } = useUserStore();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -47,13 +48,13 @@ export default function LoginPage() {
 
     const handleGoogleLogin = async () => {
         setIsSubmitting(true);
-        const result = await loginWithGoogle();
-
-        if (result.success) {
-            toast.success('Welcome back!', {
-                description: 'Successfully logged in with Google.',
-            });
-            router.push('/dashboard');
+        try {
+            // Use NextAuth's signIn for Google OAuth
+            await signIn('google', { callbackUrl: '/dashboard' });
+        } catch (err) {
+            console.error('Google login error:', err);
+            toast.error('Failed to sign in with Google');
+            setIsSubmitting(false);
         }
     };
 
