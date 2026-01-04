@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,11 +15,15 @@ import { useUserStore } from '@/store/userStore';
 
 export default function LoginPage() {
     const router = useRouter();
-    const { login, isAuthenticated, isLoading } = useUserStore();
+    const { status } = useSession();
+    const { isAuthenticated: storeAuth } = useUserStore();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Combined auth check
+    const isAuthenticated = status === 'authenticated' || storeAuth;
 
     // Redirect if already authenticated
     useEffect(() => {
@@ -33,15 +37,20 @@ export default function LoginPage() {
         setError('');
         setIsSubmitting(true);
 
-        const result = await login(email, password);
+        // Use NextAuth credentials provider for login
+        const result = await signIn('credentials', {
+            email,
+            password,
+            redirect: false,
+        });
 
-        if (result.success) {
+        if (result?.ok) {
             toast.success('Welcome back!', {
                 description: 'Successfully logged in to DataQuest.',
             });
             router.push('/dashboard');
         } else {
-            setError(result.error || 'Invalid email or password');
+            setError(result?.error || 'Invalid email or password');
             setIsSubmitting(false);
         }
     };
@@ -98,7 +107,7 @@ export default function LoginPage() {
                         variant="outline"
                         className="w-full h-12 text-base border-border/50 hover:bg-muted/50"
                         onClick={handleGoogleLogin}
-                        disabled={isSubmitting || isLoading}
+                        disabled={isSubmitting || status === 'loading'}
                     >
                         {isSubmitting ? (
                             <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -187,7 +196,7 @@ export default function LoginPage() {
                         <Button
                             type="submit"
                             className="w-full h-12 text-base bg-gradient-primary hover:opacity-90 glow-sm"
-                            disabled={isSubmitting || isLoading}
+                            disabled={isSubmitting || status === 'loading'}
                         >
                             {isSubmitting ? (
                                 <>
