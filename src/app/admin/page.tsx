@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
@@ -49,8 +50,11 @@ import {
     Loader2,
     BarChart3,
     Brain,
+    Shield,
+    Lock,
 } from 'lucide-react';
 import { mockTopics, mockQuizzes } from '@/lib/mockData';
+import { useUserStore } from '@/store/userStore';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -75,11 +79,14 @@ const adminTopics: AdminTopic[] = mockTopics.map((t) => ({
 }));
 
 export default function AdminPage() {
+    const router = useRouter();
+    const { profile, isAuthenticated, isLoading: authLoading } = useUserStore();
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddTopicOpen, setIsAddTopicOpen] = useState(false);
     const [isAddQuizOpen, setIsAddQuizOpen] = useState(false);
     const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
     const [newTopic, setNewTopic] = useState({
         title: '',
@@ -88,6 +95,73 @@ export default function AdminPage() {
         difficulty: 'beginner' as const,
         xpReward: 100,
     });
+
+    // Check auth and admin status
+    useEffect(() => {
+        // Wait a bit for hydration
+        const timer = setTimeout(() => {
+            setIsCheckingAuth(false);
+        }, 100);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    useEffect(() => {
+        if (!isCheckingAuth && !authLoading) {
+            if (!isAuthenticated) {
+                toast.error('Please login first', {
+                    description: 'You need to be logged in to access this page.',
+                });
+                router.push('/login');
+            } else if (profile?.role !== 'admin') {
+                toast.error('Access Denied', {
+                    description: 'You do not have permission to access the admin panel.',
+                });
+                router.push('/dashboard');
+            }
+        }
+    }, [isAuthenticated, profile, router, isCheckingAuth, authLoading]);
+
+    // Show loading while checking auth
+    if (isCheckingAuth || authLoading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+                    <p className="text-muted-foreground">Checking permissions...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Show access denied if not admin
+    if (!isAuthenticated || profile?.role !== 'admin') {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center glass-card p-12 max-w-md"
+                >
+                    <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
+                        <Lock className="w-10 h-10 text-red-500" />
+                    </div>
+                    <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+                    <p className="text-muted-foreground mb-6">
+                        You do not have permission to access the admin panel. Please login with an admin account.
+                    </p>
+                    <div className="flex gap-3 justify-center">
+                        <Button variant="outline" onClick={() => router.push('/dashboard')}>
+                            Go to Dashboard
+                        </Button>
+                        <Button onClick={() => router.push('/login')}>
+                            Login as Admin
+                        </Button>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    }
 
     const filteredTopics = adminTopics.filter((topic) =>
         topic.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -136,12 +210,19 @@ export default function AdminPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-8"
                 >
-                    <h1 className="text-3xl font-bold mb-2">
-                        <span className="text-gradient">Admin Panel</span>
-                    </h1>
+                    <div className="flex items-center gap-3 mb-2">
+                        <Shield className="w-8 h-8 text-amber-500" />
+                        <h1 className="text-3xl font-bold">
+                            <span className="text-gradient">Admin Panel</span>
+                        </h1>
+                    </div>
                     <p className="text-muted-foreground">
                         Manage topics, quizzes, and platform settings
                     </p>
+                    <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 text-sm">
+                        <Shield className="w-4 h-4" />
+                        Logged in as: {profile.email}
+                    </div>
                 </motion.div>
 
                 {/* Stats Overview */}

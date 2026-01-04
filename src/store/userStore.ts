@@ -49,17 +49,22 @@ export interface UserProfile {
   lastActiveDate: string;
   joinedAt: Date;
   college?: string;
+  role: 'user' | 'admin';
 }
 
 interface UserState {
   profile: UserProfile | null;
+  isAuthenticated: boolean;
   stats: UserStats;
   badges: Badge[];
   activities: Activity[];
   topicProgress: TopicProgress[];
   isLoading: boolean;
-  
+
   // Actions
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (username: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: () => Promise<{ success: boolean }>;
   setProfile: (profile: UserProfile) => void;
   updateXP: (amount: number) => void;
   updateStreak: () => void;
@@ -106,30 +111,141 @@ const initialActivities: Activity[] = [
   { id: '4', type: 'achievement', title: 'Badge Earned!', description: 'Earned "Rising Star" badge', xpEarned: 200, timestamp: new Date('2024-03-15T12:00:00') },
 ];
 
-const mockProfile: UserProfile = {
-  id: 'user-1',
-  username: 'DataWizard',
-  email: 'datawizard@example.com',
-  avatar: '/avatars/default.png',
-  xp: 2450,
-  level: 15,
-  streak: 7,
-  lastActiveDate: new Date().toISOString().split('T')[0],
-  joinedAt: new Date('2024-01-01'),
-  college: 'MIT',
-};
+// Mock users database
+const mockUsers = [
+  { email: 'admin@dataquest.com', password: 'admin123', username: 'Admin', role: 'admin' as const },
+  { email: 'user@example.com', password: 'user123', username: 'DataWizard', role: 'user' as const },
+];
 
 export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
-      profile: mockProfile,
+      profile: null,
+      isAuthenticated: false,
       stats: initialStats,
       badges: initialBadges,
       activities: initialActivities,
       topicProgress: [],
       isLoading: false,
 
-      setProfile: (profile) => set({ profile }),
+      login: async (email: string, password: string) => {
+        set({ isLoading: true });
+
+        // Simulate API delay
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Check mock users
+        const user = mockUsers.find(
+          (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+        );
+
+        if (user) {
+          const profile: UserProfile = {
+            id: 'user-' + Date.now(),
+            username: user.username,
+            email: user.email,
+            avatar: '/avatars/default.png',
+            xp: 2450,
+            level: 15,
+            streak: 7,
+            lastActiveDate: new Date().toISOString().split('T')[0],
+            joinedAt: new Date('2024-01-01'),
+            college: 'MIT',
+            role: user.role,
+          };
+
+          set({
+            profile,
+            isAuthenticated: true,
+            isLoading: false,
+            badges: initialBadges,
+            activities: initialActivities,
+            stats: initialStats,
+          });
+
+          return { success: true };
+        }
+
+        set({ isLoading: false });
+        return { success: false, error: 'Invalid email or password' };
+      },
+
+      register: async (username: string, email: string, password: string) => {
+        set({ isLoading: true });
+
+        // Simulate API delay
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Check if email already exists
+        if (mockUsers.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
+          set({ isLoading: false });
+          return { success: false, error: 'Email already registered' };
+        }
+
+        // Create new user
+        const profile: UserProfile = {
+          id: 'user-' + Date.now(),
+          username,
+          email,
+          avatar: '/avatars/default.png',
+          xp: 0,
+          level: 1,
+          streak: 0,
+          lastActiveDate: new Date().toISOString().split('T')[0],
+          joinedAt: new Date(),
+          role: 'user',
+        };
+
+        set({
+          profile,
+          isAuthenticated: true,
+          isLoading: false,
+          badges: initialBadges.map(b => ({ ...b, locked: true, earnedAt: undefined })),
+          activities: [],
+          stats: {
+            ...initialStats,
+            topicsCompleted: 0,
+            quizAccuracy: 0,
+            totalQuizzes: 0,
+            correctAnswers: 0,
+            totalQuestions: 0,
+            rank: initialStats.totalUsers,
+            timeSpent: 0,
+          },
+        });
+
+        return { success: true };
+      },
+
+      loginWithGoogle: async () => {
+        set({ isLoading: true });
+
+        // Simulate API delay
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        const profile: UserProfile = {
+          id: 'user-google-' + Date.now(),
+          username: 'GoogleUser',
+          email: 'google@example.com',
+          avatar: '/avatars/default.png',
+          xp: 0,
+          level: 1,
+          streak: 0,
+          lastActiveDate: new Date().toISOString().split('T')[0],
+          joinedAt: new Date(),
+          role: 'user',
+        };
+
+        set({
+          profile,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+
+        return { success: true };
+      },
+
+      setProfile: (profile) => set({ profile, isAuthenticated: !!profile }),
 
       updateXP: (amount) => set((state) => {
         if (!state.profile) return state;
@@ -148,15 +264,15 @@ export const useUserStore = create<UserState>()(
         if (!state.profile) return state;
         const today = new Date().toISOString().split('T')[0];
         const lastActive = state.profile.lastActiveDate;
-        
+
         if (lastActive === today) return state;
-        
+
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = yesterday.toISOString().split('T')[0];
-        
+
         const newStreak = lastActive === yesterdayStr ? state.profile.streak + 1 : 1;
-        
+
         return {
           profile: {
             ...state.profile,
@@ -182,13 +298,13 @@ export const useUserStore = create<UserState>()(
           completed,
           lastAccessed: new Date(),
         };
-        
+
         if (existingIndex >= 0) {
           const updated = [...state.topicProgress];
           updated[existingIndex] = newProgress;
           return { topicProgress: updated };
         }
-        
+
         return { topicProgress: [...state.topicProgress, newProgress] };
       }),
 
@@ -200,6 +316,7 @@ export const useUserStore = create<UserState>()(
 
       logout: () => set({
         profile: null,
+        isAuthenticated: false,
         stats: initialStats,
         badges: [],
         activities: [],

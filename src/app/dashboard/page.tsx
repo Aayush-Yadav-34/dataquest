@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { StatCard } from '@/components/shared/StatCard';
 import { XPProgressBar } from '@/components/shared/ProgressBar';
@@ -21,12 +23,34 @@ import {
     Zap,
     Star,
     Crown,
+    Loader2,
 } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
 import { mockTopics, mockLeaderboard } from '@/lib/mockData';
+import { toast } from 'sonner';
 
 export default function DashboardPage() {
-    const { profile, stats, badges } = useUserStore();
+    const router = useRouter();
+    const { profile, stats, badges, isAuthenticated, isLoading } = useUserStore();
+
+    // Auth protection
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated) {
+            toast.error('Please login first', {
+                description: 'You need to be logged in to access the dashboard.',
+            });
+            router.push('/login');
+        }
+    }, [isAuthenticated, isLoading, router]);
+
+    // Show loading while checking auth
+    if (isLoading || !isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     // Get recent/in-progress topics
     const continueTopics = mockTopics.filter((t) => t.progress > 0 && t.progress < 100).slice(0, 3);
@@ -167,8 +191,8 @@ export default function DashboardPage() {
                                                     <div className="flex items-center gap-2 mb-1">
                                                         <h3 className="font-semibold truncate">{topic.title}</h3>
                                                         <span className={`text-xs px-2 py-0.5 rounded-full ${topic.difficulty === 'beginner' ? 'bg-emerald-500/20 text-emerald-500' :
-                                                                topic.difficulty === 'intermediate' ? 'bg-amber-500/20 text-amber-500' :
-                                                                    'bg-red-500/20 text-red-500'
+                                                            topic.difficulty === 'intermediate' ? 'bg-amber-500/20 text-amber-500' :
+                                                                'bg-red-500/20 text-red-500'
                                                             }`}>
                                                             {topic.difficulty}
                                                         </span>
@@ -261,8 +285,8 @@ export default function DashboardPage() {
                                     <div
                                         key={leader.userId}
                                         className={`flex items-center gap-3 p-2 rounded-lg ${index === 0 ? 'bg-yellow-500/10' :
-                                                index === 1 ? 'bg-gray-400/10' :
-                                                    index === 2 ? 'bg-amber-600/10' : ''
+                                            index === 1 ? 'bg-gray-400/10' :
+                                                index === 2 ? 'bg-amber-600/10' : ''
                                             }`}
                                     >
                                         <div className="w-8 text-center font-bold">

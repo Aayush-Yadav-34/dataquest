@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -8,75 +8,87 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Zap, Mail, Lock, User, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
+import { Zap, Mail, Lock, User, ArrowRight, Loader2, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
-
-const passwordRequirements = [
-    { label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
-    { label: 'Contains a number', test: (p: string) => /\d/.test(p) },
-    { label: 'Contains uppercase letter', test: (p: string) => /[A-Z]/.test(p) },
-];
+import { useUserStore } from '@/store/userStore';
+import { cn } from '@/lib/utils';
 
 export default function RegisterPage() {
     const router = useRouter();
-    const [isLoading, setIsLoading] = useState(false);
-    const [formData, setFormData] = useState({
-        username: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-    });
+    const { register, loginWithGoogle, isAuthenticated, isLoading } = useUserStore();
+    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
-        setError('');
-    };
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            router.push('/dashboard');
+        }
+    }, [isAuthenticated, router]);
+
+    // Password requirements
+    const passwordRequirements = [
+        { label: 'At least 8 characters', met: password.length >= 8 },
+        { label: 'Contains uppercase letter', met: /[A-Z]/.test(password) },
+        { label: 'Contains lowercase letter', met: /[a-z]/.test(password) },
+        { label: 'Contains a number', met: /\d/.test(password) },
+    ];
+
+    const allRequirementsMet = passwordRequirements.every((req) => req.met);
+    const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        // Validation
-        if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
-            return;
-        }
-
-        const allRequirementsMet = passwordRequirements.every((req) => req.test(formData.password));
         if (!allRequirementsMet) {
             setError('Please meet all password requirements');
             return;
         }
 
-        setIsLoading(true);
+        if (!passwordsMatch) {
+            setError('Passwords do not match');
+            return;
+        }
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        setIsSubmitting(true);
+        const result = await register(username, email, password);
 
-        toast.success('Account created!', {
-            description: 'Welcome to DataQuest. Let\'s start learning!',
-        });
-        router.push('/dashboard');
+        if (result.success) {
+            toast.success('Account created!', {
+                description: 'Welcome to DataQuest. Let\'s start learning!',
+            });
+            router.push('/dashboard');
+        } else {
+            setError(result.error || 'Registration failed');
+            setIsSubmitting(false);
+        }
     };
 
-    const handleGoogleRegister = async () => {
-        setIsLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        toast.success('Account created!', {
-            description: 'Welcome to DataQuest. Let\'s start learning!',
-        });
-        router.push('/dashboard');
+    const handleGoogleLogin = async () => {
+        setIsSubmitting(true);
+        const result = await loginWithGoogle();
+
+        if (result.success) {
+            toast.success('Account created!', {
+                description: 'Welcome to DataQuest. Let\'s start learning!',
+            });
+            router.push('/dashboard');
+        }
     };
 
     return (
         <div className="min-h-screen flex">
             {/* Left Panel - Visual */}
-            <div className="hidden lg:flex flex-1 bg-gradient-to-bl from-accent/20 via-background to-primary/20 items-center justify-center p-12 relative overflow-hidden">
+            <div className="hidden lg:flex flex-1 bg-gradient-to-br from-accent/20 via-background to-primary/20 items-center justify-center p-12 relative overflow-hidden">
                 {/* Background effects */}
                 <div className="absolute inset-0 bg-gradient-glow opacity-30" />
                 <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-accent/30 rounded-full blur-3xl animate-float" />
-                <div className="absolute bottom-1/3 right-1/4 w-48 h-48 bg-primary/30 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+                <div className="absolute bottom-1/3 right-1/4 w-48 h-48 bg-primary/30 rounded-full blur-3xl animate-float" style={{ animationDelay: '3s' }} />
 
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -85,28 +97,24 @@ export default function RegisterPage() {
                     className="relative text-center"
                 >
                     <div className="glass-card p-12 max-w-md">
-                        <div className="text-6xl mb-6">🎮</div>
-                        <h2 className="text-2xl font-bold mb-4">Learn Like Never Before</h2>
-                        <p className="text-muted-foreground mb-8">
-                            Join thousands of students mastering data science through gamified learning.
+                        <div className="text-6xl mb-6">🎓</div>
+                        <h2 className="text-2xl font-bold mb-4">Start Your Journey</h2>
+                        <p className="text-muted-foreground">
+                            Join thousands of learners mastering Data Science through gamified learning
                         </p>
-                        <div className="space-y-4 text-left">
-                            {[
-                                '✨ Interactive lessons with visualizations',
-                                '🏆 Compete on global leaderboards',
-                                '📊 Upload and analyze real datasets',
-                                '🎯 Track progress with detailed analytics',
-                            ].map((feature, i) => (
-                                <motion.div
-                                    key={i}
-                                    initial={{ x: -20, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    transition={{ delay: 0.5 + i * 0.1 }}
-                                    className="flex items-center gap-3 text-sm"
-                                >
-                                    {feature}
-                                </motion.div>
-                            ))}
+                        <div className="mt-8 grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <p className="text-2xl font-bold text-gradient">50K+</p>
+                                <p className="text-xs text-muted-foreground">Learners</p>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-gradient">100+</p>
+                                <p className="text-xs text-muted-foreground">Topics</p>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-gradient">95%</p>
+                                <p className="text-xs text-muted-foreground">Completion</p>
+                            </div>
                         </div>
                     </div>
                 </motion.div>
@@ -130,20 +138,20 @@ export default function RegisterPage() {
 
                     {/* Header */}
                     <div>
-                        <h1 className="text-3xl font-bold">Create your account</h1>
+                        <h1 className="text-3xl font-bold">Create an account</h1>
                         <p className="text-muted-foreground mt-2">
                             Start your data science journey today
                         </p>
                     </div>
 
-                    {/* Google Register */}
+                    {/* Google Signup */}
                     <Button
                         variant="outline"
                         className="w-full h-12 text-base border-border/50 hover:bg-muted/50"
-                        onClick={handleGoogleRegister}
-                        disabled={isLoading}
+                        onClick={handleGoogleLogin}
+                        disabled={isSubmitting || isLoading}
                     >
-                        {isLoading ? (
+                        {isSubmitting ? (
                             <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                         ) : (
                             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -184,11 +192,12 @@ export default function RegisterPage() {
                                 <Input
                                     id="username"
                                     type="text"
-                                    placeholder="datawizard"
+                                    placeholder="Choose a username"
                                     className="pl-10 h-12"
-                                    value={formData.username}
-                                    onChange={handleChange}
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
                                     required
+                                    minLength={3}
                                 />
                             </div>
                         </div>
@@ -202,8 +211,8 @@ export default function RegisterPage() {
                                     type="email"
                                     placeholder="you@example.com"
                                     className="pl-10 h-12"
-                                    value={formData.email}
-                                    onChange={handleChange}
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     required
                                 />
                             </div>
@@ -218,27 +227,38 @@ export default function RegisterPage() {
                                     type="password"
                                     placeholder="Create a password"
                                     className="pl-10 h-12"
-                                    value={formData.password}
-                                    onChange={handleChange}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
                                     required
                                 />
                             </div>
-                            {/* Password Requirements */}
-                            <div className="space-y-1 mt-2">
+                        </div>
+
+                        {/* Password Requirements */}
+                        {password.length > 0 && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                className="grid grid-cols-2 gap-2"
+                            >
                                 {passwordRequirements.map((req, i) => (
                                     <div
                                         key={i}
-                                        className={`flex items-center gap-2 text-xs ${req.test(formData.password)
-                                                ? 'text-emerald-500'
-                                                : 'text-muted-foreground'
-                                            }`}
+                                        className={cn(
+                                            'flex items-center gap-2 text-xs',
+                                            req.met ? 'text-emerald-500' : 'text-muted-foreground'
+                                        )}
                                     >
-                                        <CheckCircle className="w-3 h-3" />
+                                        {req.met ? (
+                                            <Check className="w-3 h-3" />
+                                        ) : (
+                                            <X className="w-3 h-3" />
+                                        )}
                                         {req.label}
                                     </div>
                                 ))}
-                            </div>
-                        </div>
+                            </motion.div>
+                        )}
 
                         <div className="space-y-2">
                             <Label htmlFor="confirmPassword">Confirm Password</Label>
@@ -248,12 +268,18 @@ export default function RegisterPage() {
                                     id="confirmPassword"
                                     type="password"
                                     placeholder="Confirm your password"
-                                    className="pl-10 h-12"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
+                                    className={cn(
+                                        'pl-10 h-12',
+                                        confirmPassword && !passwordsMatch && 'border-destructive'
+                                    )}
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
                                     required
                                 />
                             </div>
+                            {confirmPassword && !passwordsMatch && (
+                                <p className="text-xs text-destructive">Passwords do not match</p>
+                            )}
                         </div>
 
                         {error && (
@@ -269,9 +295,9 @@ export default function RegisterPage() {
                         <Button
                             type="submit"
                             className="w-full h-12 text-base bg-gradient-primary hover:opacity-90 glow-sm"
-                            disabled={isLoading}
+                            disabled={isSubmitting || isLoading || !allRequirementsMet || !passwordsMatch}
                         >
-                            {isLoading ? (
+                            {isSubmitting ? (
                                 <>
                                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                                     Creating account...
@@ -286,7 +312,7 @@ export default function RegisterPage() {
                     </form>
 
                     {/* Login Link */}
-                    <p className="text-center text-muted-foreground text-sm">
+                    <p className="text-center text-muted-foreground">
                         Already have an account?{' '}
                         <Link href="/login" className="text-primary font-medium hover:underline">
                             Sign in
@@ -294,15 +320,11 @@ export default function RegisterPage() {
                     </p>
 
                     {/* Terms */}
-                    <p className="text-center text-xs text-muted-foreground">
+                    <p className="text-xs text-center text-muted-foreground">
                         By creating an account, you agree to our{' '}
-                        <Link href="#" className="text-primary hover:underline">
-                            Terms of Service
-                        </Link>{' '}
-                        and{' '}
-                        <Link href="#" className="text-primary hover:underline">
-                            Privacy Policy
-                        </Link>
+                        <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link>
+                        {' '}and{' '}
+                        <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
                     </p>
                 </motion.div>
             </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -10,41 +10,51 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Zap, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useUserStore } from '@/store/userStore';
 
 export default function LoginPage() {
     const router = useRouter();
-    const [isLoading, setIsLoading] = useState(false);
+    const { login, loginWithGoogle, isAuthenticated, isLoading } = useUserStore();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            router.push('/dashboard');
+        }
+    }, [isAuthenticated, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        setIsLoading(true);
+        setIsSubmitting(true);
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const result = await login(email, password);
 
-        // Mock login - accept any valid email format
-        if (email && password.length >= 6) {
+        if (result.success) {
             toast.success('Welcome back!', {
                 description: 'Successfully logged in to DataQuest.',
             });
             router.push('/dashboard');
         } else {
-            setError('Invalid email or password. Password must be at least 6 characters.');
-            setIsLoading(false);
+            setError(result.error || 'Invalid email or password');
+            setIsSubmitting(false);
         }
     };
 
     const handleGoogleLogin = async () => {
-        setIsLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        toast.success('Welcome back!', {
-            description: 'Successfully logged in with Google.',
-        });
-        router.push('/dashboard');
+        setIsSubmitting(true);
+        const result = await loginWithGoogle();
+
+        if (result.success) {
+            toast.success('Welcome back!', {
+                description: 'Successfully logged in with Google.',
+            });
+            router.push('/dashboard');
+        }
     };
 
     return (
@@ -73,14 +83,23 @@ export default function LoginPage() {
                         </p>
                     </div>
 
+                    {/* Demo Credentials */}
+                    <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
+                        <p className="text-sm font-medium mb-2">Demo Credentials:</p>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                            <p><strong>Admin:</strong> admin@dataquest.com / admin123</p>
+                            <p><strong>User:</strong> user@example.com / user123</p>
+                        </div>
+                    </div>
+
                     {/* Google Login */}
                     <Button
                         variant="outline"
                         className="w-full h-12 text-base border-border/50 hover:bg-muted/50"
                         onClick={handleGoogleLogin}
-                        disabled={isLoading}
+                        disabled={isSubmitting || isLoading}
                     >
-                        {isLoading ? (
+                        {isSubmitting ? (
                             <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                         ) : (
                             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -167,9 +186,9 @@ export default function LoginPage() {
                         <Button
                             type="submit"
                             className="w-full h-12 text-base bg-gradient-primary hover:opacity-90 glow-sm"
-                            disabled={isLoading}
+                            disabled={isSubmitting || isLoading}
                         >
-                            {isLoading ? (
+                            {isSubmitting ? (
                                 <>
                                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                                     Signing in...
