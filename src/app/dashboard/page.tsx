@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Navbar } from '@/components/layout/Navbar';
 import { StatCard } from '@/components/shared/StatCard';
 import { XPProgressBar } from '@/components/shared/ProgressBar';
@@ -31,7 +32,23 @@ import { toast } from 'sonner';
 
 export default function DashboardPage() {
     const router = useRouter();
-    const { profile, stats, badges, isAuthenticated, isLoading } = useUserStore();
+    const { data: session, status } = useSession();
+    const { profile, stats, badges, isAuthenticated: storeAuth } = useUserStore();
+
+    // Combined auth check
+    const isAuthenticated = status === 'authenticated' || storeAuth;
+    const isLoading = status === 'loading';
+
+    // Get user info from session or store
+    const user = session?.user ? {
+        username: session.user.username || session.user.name || 'User',
+        email: session.user.email || '',
+        avatar: session.user.image,
+        role: session.user.role || 'user',
+        xp: session.user.xp || 0,
+        level: session.user.level || 1,
+        streak: session.user.streak || 0,
+    } : profile;
 
     // Auth protection
     useEffect(() => {
@@ -60,9 +77,17 @@ export default function DashboardPage() {
     const topLeaders = mockLeaderboard.slice(0, 5);
     const currentUserRank = mockLeaderboard.find((l) => l.isCurrentUser);
 
-    if (!profile) {
+    if (!user) {
         return null;
     }
+
+    // Use user for profile data
+    const displayProfile = {
+        username: user.username,
+        xp: user.xp,
+        level: user.level,
+        streak: user.streak,
+    };
 
     return (
         <div className="min-h-screen bg-background">
@@ -78,7 +103,7 @@ export default function DashboardPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
                             <h1 className="text-3xl font-bold">
-                                Welcome back, <span className="text-gradient">{profile.username}</span>! 👋
+                                Welcome back, <span className="text-gradient">{displayProfile.username}</span>! 👋
                             </h1>
                             <p className="text-muted-foreground mt-1">
                                 Ready to continue your data science journey?
@@ -89,7 +114,7 @@ export default function DashboardPage() {
                             <div className="flex items-center gap-2 glass-card px-4 py-2">
                                 <Flame className="w-5 h-5 text-orange-500" />
                                 <div>
-                                    <span className="text-xl font-bold text-orange-400">{profile.streak}</span>
+                                    <span className="text-xl font-bold text-orange-400">{displayProfile.streak}</span>
                                     <span className="text-sm text-muted-foreground ml-1">day streak</span>
                                 </div>
                             </div>
@@ -106,20 +131,20 @@ export default function DashboardPage() {
                 >
                     <div className="flex items-center gap-4 mb-4">
                         <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center text-2xl font-bold text-white glow">
-                            {profile.level}
+                            {displayProfile.level}
                         </div>
                         <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                                <h2 className="text-lg font-semibold">Level {profile.level}</h2>
+                                <h2 className="text-lg font-semibold">Level {displayProfile.level}</h2>
                                 <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
-                                    {profile.xp.toLocaleString()} XP Total
+                                    {displayProfile.xp.toLocaleString()} XP Total
                                 </span>
                             </div>
-                            <XPProgressBar currentXP={profile.xp} level={profile.level} showLabel={false} size="lg" />
+                            <XPProgressBar currentXP={displayProfile.xp} level={displayProfile.level} showLabel={false} size="lg" />
                         </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                        {Math.pow(profile.level, 2) * 100 - profile.xp} XP to Level {profile.level + 1}
+                        {Math.pow(displayProfile.level, 2) * 100 - displayProfile.xp} XP to Level {displayProfile.level + 1}
                     </p>
                 </motion.div>
 

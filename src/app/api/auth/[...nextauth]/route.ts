@@ -115,6 +115,17 @@ const handler = NextAuth({
             }
             return session;
         },
+        async redirect({ url, baseUrl }) {
+            // Always redirect to dashboard after login
+            if (url.startsWith(baseUrl)) {
+                return `${baseUrl}/dashboard`;
+            }
+            // Allows relative callback URLs
+            if (url.startsWith('/')) {
+                return `${baseUrl}${url}`;
+            }
+            return `${baseUrl}/dashboard`;
+        },
     },
     pages: {
         signIn: '/login',

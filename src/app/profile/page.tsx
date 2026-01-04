@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Navbar } from '@/components/layout/Navbar';
 import { XPProgressBar } from '@/components/shared/ProgressBar';
 import { BadgeGrid } from '@/components/shared/Badge';
@@ -39,16 +41,49 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {
-    const { profile, stats, badges, activities } = useUserStore();
+    const router = useRouter();
+    const { data: session, status } = useSession();
+    const { profile, stats, badges, activities, isAuthenticated: storeAuth } = useUserStore();
+
+    // Combined auth check
+    const isAuthenticated = status === 'authenticated' || storeAuth;
+    const isLoading = status === 'loading';
+
+    // Get user info from session or store
+    const user = session?.user ? {
+        username: session.user.username || session.user.name || 'User',
+        email: session.user.email || '',
+        avatar: session.user.image,
+        xp: session.user.xp || 0,
+        level: session.user.level || 1,
+        streak: session.user.streak || 0,
+    } : profile ? {
+        username: profile.username,
+        email: profile.email,
+        avatar: profile.avatar,
+        xp: profile.xp,
+        level: profile.level,
+        streak: profile.streak,
+    } : null;
+
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [editForm, setEditForm] = useState({
-        username: profile?.username || '',
-        email: profile?.email || '',
-        college: profile?.college || '',
+        username: user?.username || '',
+        email: user?.email || '',
     });
 
-    if (!profile) {
+    // Show loading or redirect if not authenticated
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (!isAuthenticated || !user) {
+        router.push('/login');
         return null;
     }
 
@@ -82,13 +117,13 @@ export default function ProfilePage() {
                         {/* Avatar */}
                         <div className="relative">
                             <Avatar className="w-28 h-28 border-4 border-primary/50 glow">
-                                <AvatarImage src={profile.avatar} />
+                                <AvatarImage src={user.avatar} />
                                 <AvatarFallback className="bg-gradient-primary text-white text-3xl">
-                                    {profile.username.slice(0, 2).toUpperCase()}
+                                    {user.username.slice(0, 2).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold border-4 border-background">
-                                {profile.level}
+                                {user.level}
                             </div>
                         </div>
 
@@ -96,18 +131,12 @@ export default function ProfilePage() {
                         <div className="flex-1">
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <h1 className="text-2xl font-bold mb-1">{profile.username}</h1>
-                                    <p className="text-muted-foreground">{profile.email}</p>
+                                    <h1 className="text-2xl font-bold mb-1">{user.username}</h1>
+                                    <p className="text-muted-foreground">{user.email}</p>
                                     <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
-                                        {profile.college && (
-                                            <span className="flex items-center gap-1">
-                                                <GraduationCap className="w-4 h-4" />
-                                                {profile.college}
-                                            </span>
-                                        )}
                                         <span className="flex items-center gap-1">
                                             <Calendar className="w-4 h-4" />
-                                            Joined {profile.joinedAt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                            Member
                                         </span>
                                     </div>
                                 </div>
@@ -145,15 +174,6 @@ export default function ProfilePage() {
                                                     onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                                                 />
                                             </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="edit-college">College/University</Label>
-                                                <Input
-                                                    id="edit-college"
-                                                    value={editForm.college}
-                                                    onChange={(e) => setEditForm({ ...editForm, college: e.target.value })}
-                                                    placeholder="Enter your institution"
-                                                />
-                                            </div>
                                         </div>
                                         <DialogFooter>
                                             <Button variant="outline" onClick={() => setIsEditing(false)}>
@@ -176,7 +196,7 @@ export default function ProfilePage() {
 
                             {/* XP Progress */}
                             <div className="mt-6">
-                                <XPProgressBar currentXP={profile.xp} level={profile.level} />
+                                <XPProgressBar currentXP={user.xp} level={user.level} />
                             </div>
                         </div>
                     </div>
@@ -186,14 +206,14 @@ export default function ProfilePage() {
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-2 text-primary mb-1">
                                 <Zap className="w-5 h-5" />
-                                <span className="text-2xl font-bold">{profile.xp.toLocaleString()}</span>
+                                <span className="text-2xl font-bold">{user.xp.toLocaleString()}</span>
                             </div>
                             <p className="text-sm text-muted-foreground">Total XP</p>
                         </div>
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-2 text-orange-500 mb-1">
                                 <Flame className="w-5 h-5" />
-                                <span className="text-2xl font-bold">{profile.streak}</span>
+                                <span className="text-2xl font-bold">{user.streak}</span>
                             </div>
                             <p className="text-sm text-muted-foreground">Day Streak</p>
                         </div>

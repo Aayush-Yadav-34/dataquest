@@ -3,6 +3,8 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Navbar } from '@/components/layout/Navbar';
 import { StatCard } from '@/components/shared/StatCard';
 import { CircularProgress } from '@/components/shared/ProgressBar';
@@ -18,6 +20,7 @@ import {
     Trophy,
     Zap,
     Calendar,
+    Loader2,
 } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
 import { mockTopics, skillsData, accuracyTrendData, timeSpentData } from '@/lib/mockData';
@@ -26,7 +29,13 @@ import { cn } from '@/lib/utils';
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 export default function ProgressPage() {
-    const { profile, stats } = useUserStore();
+    const router = useRouter();
+    const { data: session, status } = useSession();
+    const { profile, stats, isAuthenticated: storeAuth } = useUserStore();
+
+    // Combined auth check
+    const isAuthenticated = status === 'authenticated' || storeAuth;
+    const isLoading = status === 'loading';
 
     // Calculate category progress
     const categoryProgress = useMemo(() => {
@@ -55,7 +64,19 @@ export default function ProgressPage() {
         { day: 'Sun', minutes: 45, xp: 100 },
     ];
 
-    if (!profile) return null;
+    // Show loading or redirect if not authenticated
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        router.push('/login');
+        return null;
+    }
 
     return (
         <div className="min-h-screen bg-background">
@@ -88,7 +109,7 @@ export default function ProgressPage() {
                     <StatCard
                         title="Quiz Accuracy"
                         value={`${stats.quizAccuracy}%`}
-                        subtitle={`${stats.totalQuizzes} quizzes taken`}
+                        subtitle={`${stats.totalQuestions} questions answered`}
                         icon={Target}
                         variant="accent"
                         trend={{ value: 5, positive: true }}
