@@ -33,6 +33,7 @@ import {
     Shield,
 } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
+import { useUserData } from '@/hooks/useUserData';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -50,29 +51,30 @@ export function Navbar() {
     const router = useRouter();
     const { data: session, status } = useSession();
     const { profile, logout: storeLogout, isAuthenticated: storeAuth } = useUserStore();
+    const { userData } = useUserData();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Combined auth check - either NextAuth session or Zustand store
     const isAuthenticated = status === 'authenticated' || storeAuth;
 
-    // Get user info from session or store
+    // Get user info from session or store, with fresh XP data from useUserData
     const user = session?.user ? {
         username: session.user.username || session.user.name || 'User',
         email: session.user.email || '',
         avatar: session.user.image,
         role: session.user.role || 'user',
-        xp: session.user.xp || profile?.xp || 0,
-        level: session.user.level || profile?.level || 1,
-        streak: session.user.streak || profile?.streak || 0,
+        xp: userData?.xp ?? session.user.xp ?? profile?.xp ?? 0,
+        level: userData?.level ?? session.user.level ?? profile?.level ?? 1,
+        streak: userData?.streak ?? session.user.streak ?? profile?.streak ?? 0,
     } : profile ? {
         username: profile.username,
         email: profile.email,
         avatar: profile.avatar,
         role: profile.role,
-        xp: profile.xp,
-        level: profile.level,
-        streak: profile.streak,
+        xp: userData?.xp ?? profile.xp,
+        level: userData?.level ?? profile.level,
+        streak: userData?.streak ?? profile.streak,
     } : null;
 
     useEffect(() => {

@@ -12,7 +12,8 @@ export async function GET(request: NextRequest) {
 
         let query = supabase
             .from('users')
-            .select('id, username, avatar_url, xp, level, streak')
+            .select('id, username, avatar_url, xp, level, streak, role')
+            .neq('role', 'admin') // Exclude admin users from leaderboard
             .order('xp', { ascending: false })
             .limit(limit);
 

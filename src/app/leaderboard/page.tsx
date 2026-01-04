@@ -17,21 +17,40 @@ import {
     Flame,
     Zap,
     GraduationCap,
+    Loader2,
 } from 'lucide-react';
-import { mockLeaderboard } from '@/lib/mockData';
+import { useLeaderboard, LeaderboardUser } from '@/hooks/useLeaderboard';
 import { cn } from '@/lib/utils';
+
+// Extended type for local transformations
+interface ExtendedLeaderboardUser extends LeaderboardUser {
+    college?: string;
+    avatar?: string;
+    userId?: string;
+    change?: number;
+}
 
 export default function LeaderboardPage() {
     const [searchQuery, setSearchQuery] = useState('');
+    const { leaderboard, isLoading } = useLeaderboard({ limit: 50 });
+
+    // Map API data to extended format
+    const leaderboardData: ExtendedLeaderboardUser[] = leaderboard.map((user, index) => ({
+        ...user,
+        avatar: user.avatar_url,
+        userId: user.id,
+        college: 'DataQuest University', // Default college for demo
+        change: Math.floor((Math.random() - 0.5) * 10), // Random change for demo
+    }));
 
     // Filter leaderboard by search
-    const filteredLeaderboard = mockLeaderboard.filter((entry) =>
+    const filteredLeaderboard = leaderboardData.filter((entry) =>
         entry.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
         entry.college?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Generate weekly leaderboard (shuffle and adjust XP slightly)
-    const weeklyLeaderboard = [...mockLeaderboard]
+    const weeklyLeaderboard = [...leaderboardData]
         .map((entry) => ({
             ...entry,
             xp: Math.floor(entry.xp * (0.1 + Math.random() * 0.15)),
@@ -41,7 +60,7 @@ export default function LeaderboardPage() {
         .map((entry, i) => ({ ...entry, rank: i + 1 }));
 
     // Generate college leaderboard (group by college)
-    const collegeStats = mockLeaderboard.reduce((acc, entry) => {
+    const collegeStats = leaderboardData.reduce((acc, entry) => {
         const college = entry.college || 'Other';
         if (!acc[college]) {
             acc[college] = { totalXp: 0, students: 0, avgLevel: 0 };
@@ -61,6 +80,17 @@ export default function LeaderboardPage() {
         }))
         .sort((a, b) => b.totalXp - a.totalXp)
         .map((entry, i) => ({ ...entry, rank: i + 1 }));
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-background">
+                <Navbar />
+                <div className="pt-20 flex items-center justify-center min-h-[60vh]">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background">
@@ -91,19 +121,19 @@ export default function LeaderboardPage() {
                     <div className="flex items-end justify-center gap-4 h-64">
                         {/* 2nd Place */}
                         <PodiumCard
-                            entry={mockLeaderboard[1]}
+                            entry={leaderboardData[1]}
                             position={2}
                             height="h-40"
                         />
                         {/* 1st Place */}
                         <PodiumCard
-                            entry={mockLeaderboard[0]}
+                            entry={leaderboardData[0]}
                             position={1}
                             height="h-52"
                         />
                         {/* 3rd Place */}
                         <PodiumCard
-                            entry={mockLeaderboard[2]}
+                            entry={leaderboardData[2]}
                             position={3}
                             height="h-32"
                         />
@@ -163,14 +193,14 @@ export default function LeaderboardPage() {
                                 ))}
 
                                 {/* Current User (if not in top 10) */}
-                                {mockLeaderboard.find((e) => e.isCurrentUser)?.rank! > 10 && (
+                                {leaderboardData.find((e: ExtendedLeaderboardUser) => e.isCurrentUser)?.rank! > 10 && (
                                     <>
                                         <div className="py-4 text-center text-muted-foreground text-sm">
                                             • • •
                                         </div>
                                         <LeaderboardRow
-                                            entry={mockLeaderboard.find((e) => e.isCurrentUser)!}
-                                            index={mockLeaderboard.findIndex((e) => e.isCurrentUser)}
+                                            entry={leaderboardData.find((e: ExtendedLeaderboardUser) => e.isCurrentUser)!}
+                                            index={leaderboardData.findIndex((e: ExtendedLeaderboardUser) => e.isCurrentUser)}
                                             isHighlighted
                                         />
                                     </>
@@ -279,7 +309,7 @@ export default function LeaderboardPage() {
 }
 
 interface PodiumCardProps {
-    entry: typeof mockLeaderboard[0];
+    entry: ExtendedLeaderboardUser;
     position: 1 | 2 | 3;
     height: string;
 }
@@ -347,7 +377,7 @@ function PodiumCard({ entry, position, height }: PodiumCardProps) {
 }
 
 interface LeaderboardRowProps {
-    entry: typeof mockLeaderboard[0];
+    entry: ExtendedLeaderboardUser;
     index: number;
     isHighlighted?: boolean;
 }

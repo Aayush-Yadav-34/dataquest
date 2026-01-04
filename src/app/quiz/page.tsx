@@ -30,7 +30,7 @@ import { QuizQuestion } from '@/types';
 type QuizState = 'selection' | 'in-progress' | 'completed';
 
 export default function QuizPage() {
-    const { updateXP, addActivity } = useUserStore();
+    const { addXP, addActivity } = useUserStore();
     const [quizState, setQuizState] = useState<QuizState>('selection');
     const [selectedQuiz, setSelectedQuiz] = useState<typeof mockQuizzes[0] | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -108,20 +108,18 @@ export default function QuizPage() {
             setTimeout(() => setShowXPAnimation(false), 2000);
         }
 
-        updateXP(xpEarned);
+        addXP(xpEarned);
         addActivity({
-            id: Date.now().toString(),
             type: 'quiz',
             title: `${passed ? 'Passed' : 'Completed'} ${selectedQuiz.title}`,
             description: `Scored ${accuracy.toFixed(0)}% (${correctCount}/${selectedQuiz.questions.length})`,
             xpEarned,
-            timestamp: new Date(),
         });
 
         toast.success(passed ? 'Quiz Passed!' : 'Quiz Completed', {
             description: `You earned ${xpEarned} XP!`,
         });
-    }, [selectedQuiz, selectedAnswers, updateXP, addActivity]);
+    }, [selectedQuiz, selectedAnswers, addXP, addActivity]);
 
     const resetQuiz = () => {
         setQuizState('selection');

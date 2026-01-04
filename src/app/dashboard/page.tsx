@@ -27,13 +27,20 @@ import {
     Loader2,
 } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
-import { mockTopics, mockLeaderboard } from '@/lib/mockData';
+import { useTopics } from '@/hooks/useTopics';
+import { useLeaderboard } from '@/hooks/useLeaderboard';
+import { useUserData } from '@/hooks/useUserData';
 import { toast } from 'sonner';
 
 export default function DashboardPage() {
     const router = useRouter();
     const { data: session, status } = useSession();
     const { profile, stats, badges, isAuthenticated: storeAuth } = useUserStore();
+
+    // Fetch data from APIs
+    const { topics, isLoading: topicsLoading } = useTopics();
+    const { leaderboard, isLoading: leaderboardLoading } = useLeaderboard({ limit: 5 });
+    const { userData, isLoading: userDataLoading } = useUserData();
 
     // Combined auth check
     const isAuthenticated = status === 'authenticated' || storeAuth;
@@ -45,9 +52,10 @@ export default function DashboardPage() {
         email: session.user.email || '',
         avatar: session.user.image,
         role: session.user.role || 'user',
-        xp: session.user.xp || 0,
-        level: session.user.level || 1,
-        streak: session.user.streak || 0,
+        // Use fresh XP data from useUserData hook if available
+        xp: userData?.xp ?? session.user.xp ?? 0,
+        level: userData?.level ?? session.user.level ?? 1,
+        streak: userData?.streak ?? session.user.streak ?? 0,
     } : profile;
 
     // Auth protection
@@ -69,13 +77,13 @@ export default function DashboardPage() {
         );
     }
 
-    // Get recent/in-progress topics
-    const continueTopics = mockTopics.filter((t) => t.progress > 0 && t.progress < 100).slice(0, 3);
-    const recommendedTopics = mockTopics.filter((t) => !t.locked && t.progress === 0).slice(0, 2);
+    // Get recent/in-progress topics from API data
+    const continueTopics = topics.filter((t) => (t.progress || 0) > 0 && (t.progress || 0) < 100).slice(0, 3);
+    const recommendedTopics = topics.filter((t) => !t.locked && (t.progress || 0) === 0).slice(0, 2);
 
-    // Top 5 leaderboard
-    const topLeaders = mockLeaderboard.slice(0, 5);
-    const currentUserRank = mockLeaderboard.find((l) => l.isCurrentUser);
+    // Top 5 leaderboard from API
+    const topLeaders = leaderboard.slice(0, 5);
+    const currentUserRank = leaderboard.find((l) => l.isCurrentUser);
 
     if (!user) {
         return null;
@@ -269,11 +277,11 @@ export default function DashboardPage() {
                                                     <div className="flex items-center gap-3 mt-3 text-sm text-muted-foreground">
                                                         <span className="flex items-center gap-1">
                                                             <Clock className="w-4 h-4" />
-                                                            {topic.estimatedTime}m
+                                                            {topic.estimated_time}m
                                                         </span>
                                                         <span className="flex items-center gap-1">
                                                             <Star className="w-4 h-4 text-primary" />
-                                                            +{topic.xpReward} XP
+                                                            +{topic.xp_reward} XP
                                                         </span>
                                                     </div>
                                                 </div>
@@ -308,7 +316,7 @@ export default function DashboardPage() {
                             <div className="space-y-3">
                                 {topLeaders.map((leader, index) => (
                                     <div
-                                        key={leader.userId}
+                                        key={leader.id}
                                         className={`flex items-center gap-3 p-2 rounded-lg ${index === 0 ? 'bg-yellow-500/10' :
                                             index === 1 ? 'bg-gray-400/10' :
                                                 index === 2 ? 'bg-amber-600/10' : ''
@@ -319,7 +327,7 @@ export default function DashboardPage() {
                                                 <span className="text-muted-foreground">{leader.rank}</span>}
                                         </div>
                                         <Avatar className="w-8 h-8">
-                                            <AvatarImage src={leader.avatar} />
+                                            <AvatarImage src={leader.avatar_url} />
                                             <AvatarFallback className="bg-gradient-primary text-white text-xs">
                                                 {leader.username.slice(0, 2).toUpperCase()}
                                             </AvatarFallback>

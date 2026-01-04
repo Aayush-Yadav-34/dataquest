@@ -71,7 +71,7 @@ interface UserState {
   updateStats: (stats: Partial<UserStats>) => void;
   addActivity: (activity: Omit<Activity, 'id' | 'timestamp'>) => void;
   updateTopicProgress: (topicId: string, progress: number) => void;
-  addXP: (amount: number) => void;
+  addXP: (amount: number) => Promise<void>;
   fetchUserData: () => Promise<void>;
 }
 
@@ -274,20 +274,53 @@ export const useUserStore = create<UserState>()(
         });
       },
 
-      // Add XP
-      addXP: (amount) => {
-        set((state) => {
-          if (!state.profile) return state;
+      // Add XP - persists to database
+      addXP: async (amount) => {
+        const state = get();
+
+        // Optimistic update for instant feedback (if we have a local profile)
+        if (state.profile) {
           const newXP = state.profile.xp + amount;
           const newLevel = Math.floor(Math.sqrt(newXP / 100)) + 1;
-          return {
+
+          set({
             profile: {
               ...state.profile,
               xp: newXP,
               level: newLevel,
             },
-          };
-        });
+          });
+        }
+
+        // Always persist to database (works with NextAuth sessions too)
+        try {
+          console.log('Calling XP API with amount:', amount);
+          const response = await fetch('/api/users/xp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount }),
+          });
+
+          const data = await response.json();
+          console.log('XP API response:', data);
+
+          if (response.ok && data.success) {
+            // Update local profile with server values
+            if (state.profile) {
+              set((s) => ({
+                profile: s.profile ? {
+                  ...s.profile,
+                  xp: data.xp,
+                  level: data.level,
+                } : null,
+              }));
+            }
+          } else {
+            console.error('XP API error:', data.error);
+          }
+        } catch (error) {
+          console.error('Failed to persist XP:', error);
+        }
       },
     }),
     {

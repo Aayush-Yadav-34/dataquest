@@ -23,7 +23,8 @@ import {
     Loader2,
 } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
-import { mockTopics, skillsData, accuracyTrendData, timeSpentData } from '@/lib/mockData';
+import { useTopics } from '@/hooks/useTopics';
+import { skillsData, accuracyTrendData, timeSpentData } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -32,26 +33,27 @@ export default function ProgressPage() {
     const router = useRouter();
     const { data: session, status } = useSession();
     const { profile, stats, isAuthenticated: storeAuth } = useUserStore();
+    const { topics, isLoading: topicsLoading } = useTopics();
 
     // Combined auth check
     const isAuthenticated = status === 'authenticated' || storeAuth;
     const isLoading = status === 'loading';
 
-    // Calculate category progress
+    // Calculate category progress from API data
     const categoryProgress = useMemo(() => {
-        const categories = [...new Set(mockTopics.map((t) => t.category))];
+        const categories = [...new Set(topics.map((t) => t.category))];
         return categories.map((category) => {
-            const topics = mockTopics.filter((t) => t.category === category);
-            const completed = topics.filter((t) => t.completed).length;
-            const totalProgress = topics.reduce((sum, t) => sum + t.progress, 0) / topics.length;
+            const categoryTopics = topics.filter((t) => t.category === category);
+            const completed = categoryTopics.filter((t) => (t.progress || 0) >= 100).length;
+            const totalProgress = categoryTopics.reduce((sum, t) => sum + (t.progress || 0), 0) / (categoryTopics.length || 1);
             return {
                 category,
                 completed,
-                total: topics.length,
+                total: categoryTopics.length,
                 progress: totalProgress,
             };
         });
-    }, []);
+    }, [topics]);
 
     // Weekly activity data
     const weeklyActivity = [

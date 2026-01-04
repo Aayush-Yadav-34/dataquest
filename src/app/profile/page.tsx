@@ -37,6 +37,7 @@ import {
     Loader2,
 } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
+import { useUserData } from '@/hooks/useUserData';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -44,6 +45,7 @@ export default function ProfilePage() {
     const router = useRouter();
     const { data: session, status } = useSession();
     const { profile, stats, badges, activities, isAuthenticated: storeAuth } = useUserStore();
+    const { userData, isLoading: userDataLoading } = useUserData();
 
     // Combined auth check
     const isAuthenticated = status === 'authenticated' || storeAuth;
@@ -54,16 +56,17 @@ export default function ProfilePage() {
         username: session.user.username || session.user.name || 'User',
         email: session.user.email || '',
         avatar: session.user.image,
-        xp: session.user.xp || 0,
-        level: session.user.level || 1,
-        streak: session.user.streak || 0,
+        // Use fresh XP data from useUserData hook if available
+        xp: userData?.xp ?? session.user.xp ?? 0,
+        level: userData?.level ?? session.user.level ?? 1,
+        streak: userData?.streak ?? session.user.streak ?? 0,
     } : profile ? {
         username: profile.username,
         email: profile.email,
         avatar: profile.avatar,
-        xp: profile.xp,
-        level: profile.level,
-        streak: profile.streak,
+        xp: userData?.xp ?? profile.xp,
+        level: userData?.level ?? profile.level,
+        streak: userData?.streak ?? profile.streak,
     } : null;
 
     const [isEditing, setIsEditing] = useState(false);
@@ -332,7 +335,7 @@ export default function ProfilePage() {
                                                         </span>
                                                     </div>
                                                     <p className="text-xs text-muted-foreground mt-3">
-                                                        {activity.timestamp.toLocaleDateString('en-US', {
+                                                        {new Date(activity.timestamp).toLocaleDateString('en-US', {
                                                             month: 'short',
                                                             day: 'numeric',
                                                             hour: '2-digit',

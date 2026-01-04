@@ -17,8 +17,9 @@ import {
     CheckCircle,
     BookOpen,
     Filter,
+    Loader2,
 } from 'lucide-react';
-import { mockTopics } from '@/lib/mockData';
+import { useTopics, Topic } from '@/hooks/useTopics';
 import { cn } from '@/lib/utils';
 
 const categories = ['All', 'Machine Learning', 'Deep Learning', 'Data Science Fundamentals', 'Unsupervised Learning'];
@@ -28,8 +29,9 @@ export default function TheoryPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [selectedDifficulty, setSelectedDifficulty] = useState('All');
+    const { topics, isLoading } = useTopics();
 
-    const filteredTopics = mockTopics.filter((topic) => {
+    const filteredTopics = topics.filter((topic) => {
         const matchesSearch = topic.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             topic.description.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesCategory = selectedCategory === 'All' || topic.category === selectedCategory;
@@ -38,9 +40,9 @@ export default function TheoryPage() {
         return matchesSearch && matchesCategory && matchesDifficulty;
     });
 
-    const inProgressTopics = filteredTopics.filter((t) => t.progress > 0 && t.progress < 100);
-    const completedTopics = filteredTopics.filter((t) => t.completed);
-    const notStartedTopics = filteredTopics.filter((t) => t.progress === 0 && !t.locked);
+    const inProgressTopics = filteredTopics.filter((t) => (t.progress || 0) > 0 && (t.progress || 0) < 100);
+    const completedTopics = filteredTopics.filter((t) => (t.progress || 0) >= 100);
+    const notStartedTopics = filteredTopics.filter((t) => (t.progress || 0) === 0 && !t.locked);
     const lockedTopics = filteredTopics.filter((t) => t.locked);
 
     return (
@@ -222,7 +224,7 @@ export default function TheoryPage() {
 }
 
 interface TopicCardProps {
-    topic: typeof mockTopics[0];
+    topic: Topic & { prerequisites?: string[]; completed?: boolean };
     index: number;
 }
 
@@ -290,11 +292,11 @@ function TopicCard({ topic, index }: TopicCardProps) {
                         <div className="flex items-center gap-4">
                             <span className="flex items-center gap-1">
                                 <Clock className="w-4 h-4" />
-                                {topic.estimatedTime}m
+                                {topic.estimated_time}m
                             </span>
                             <span className="flex items-center gap-1">
                                 <Star className="w-4 h-4 text-primary" />
-                                +{topic.xpReward} XP
+                                +{topic.xp_reward} XP
                             </span>
                         </div>
                         {!topic.locked && (
