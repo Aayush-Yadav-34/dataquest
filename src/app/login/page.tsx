@@ -93,15 +93,6 @@ export default function LoginPage() {
                         </p>
                     </div>
 
-                    {/* Demo Credentials */}
-                    <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
-                        <p className="text-sm font-medium mb-2">Demo Credentials:</p>
-                        <div className="text-xs text-muted-foreground space-y-1">
-                            <p><strong>Admin:</strong> admin@dataquest.com / admin123</p>
-                            <p><strong>User:</strong> user@example.com / user123</p>
-                        </div>
-                    </div>
-
                     {/* Google Login */}
                     <Button
                         variant="outline"

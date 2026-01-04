@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
@@ -80,13 +81,13 @@ const adminTopics: AdminTopic[] = mockTopics.map((t) => ({
 
 export default function AdminPage() {
     const router = useRouter();
-    const { profile, isAuthenticated, isLoading: authLoading } = useUserStore();
+    const { data: session, status } = useSession();
+    const { profile, isAuthenticated: storeAuth } = useUserStore();
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddTopicOpen, setIsAddTopicOpen] = useState(false);
     const [isAddQuizOpen, setIsAddQuizOpen] = useState(false);
     const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
     const [newTopic, setNewTopic] = useState({
         title: '',
@@ -96,34 +97,33 @@ export default function AdminPage() {
         xpReward: 100,
     });
 
-    // Check auth and admin status
-    useEffect(() => {
-        // Wait a bit for hydration
-        const timer = setTimeout(() => {
-            setIsCheckingAuth(false);
-        }, 100);
+    // Combined auth check - check both NextAuth session and Zustand store
+    const isAuthenticated = status === 'authenticated' || storeAuth;
+    const isCheckingAuth = status === 'loading';
 
-        return () => clearTimeout(timer);
-    }, []);
+    // Check admin role from session or profile
+    const userRole = session?.user?.role || profile?.role;
+    const isAdmin = userRole === 'admin';
+    const userEmail = session?.user?.email || profile?.email || '';
 
     useEffect(() => {
-        if (!isCheckingAuth && !authLoading) {
+        if (!isCheckingAuth) {
             if (!isAuthenticated) {
                 toast.error('Please login first', {
                     description: 'You need to be logged in to access this page.',
                 });
                 router.push('/login');
-            } else if (profile?.role !== 'admin') {
+            } else if (!isAdmin) {
                 toast.error('Access Denied', {
                     description: 'You do not have permission to access the admin panel.',
                 });
                 router.push('/dashboard');
             }
         }
-    }, [isAuthenticated, profile, router, isCheckingAuth, authLoading]);
+    }, [isAuthenticated, isAdmin, router, isCheckingAuth]);
 
     // Show loading while checking auth
-    if (isCheckingAuth || authLoading) {
+    if (isCheckingAuth) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="text-center">
@@ -135,7 +135,7 @@ export default function AdminPage() {
     }
 
     // Show access denied if not admin
-    if (!isAuthenticated || profile?.role !== 'admin') {
+    if (!isAuthenticated || !isAdmin) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
                 <motion.div
@@ -221,7 +221,7 @@ export default function AdminPage() {
                     </p>
                     <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 text-sm">
                         <Shield className="w-4 h-4" />
-                        Logged in as: {profile.email}
+                        Logged in as: {userEmail}
                     </div>
                 </motion.div>
 
