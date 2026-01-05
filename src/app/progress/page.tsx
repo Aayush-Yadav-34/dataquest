@@ -24,7 +24,8 @@ import {
 } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
 import { useTopics } from '@/hooks/useTopics';
-import { skillsData, accuracyTrendData, timeSpentData } from '@/lib/mockData';
+import { useUserStats } from '@/hooks/useProgress';
+import { useUserData } from '@/hooks/useUserData';
 import { cn } from '@/lib/utils';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -34,10 +35,12 @@ export default function ProgressPage() {
     const { data: session, status } = useSession();
     const { profile, stats, isAuthenticated: storeAuth } = useUserStore();
     const { topics, isLoading: topicsLoading } = useTopics();
+    const { userData } = useUserData();
+    const { skillsData, accuracyTrend, timeSpentData, summary, isLoading: statsLoading } = useUserStats();
 
     // Combined auth check
     const isAuthenticated = status === 'authenticated' || storeAuth;
-    const isLoading = status === 'loading';
+    const isLoading = status === 'loading' || statsLoading;
 
     // Calculate category progress from API data
     const categoryProgress = useMemo(() => {
@@ -103,23 +106,23 @@ export default function ProgressPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <StatCard
                         title="Topics Completed"
-                        value={`${stats.topicsCompleted}/${stats.totalTopics}`}
-                        subtitle={`${Math.round((stats.topicsCompleted / stats.totalTopics) * 100)}% complete`}
+                        value={`${summary?.completedTopics || 0}/${summary?.totalTopics || topics.length}`}
+                        subtitle={`${summary?.totalTopics ? Math.round((summary.completedTopics / summary.totalTopics) * 100) : 0}% complete`}
                         icon={BookOpen}
                         variant="primary"
                     />
                     <StatCard
                         title="Quiz Accuracy"
-                        value={`${stats.quizAccuracy}%`}
-                        subtitle={`${stats.totalQuestions} questions answered`}
+                        value={`${summary?.averageAccuracy || 0}%`}
+                        subtitle={`${summary?.totalQuizzes || 0} quizzes completed`}
                         icon={Target}
                         variant="accent"
-                        trend={{ value: 5, positive: true }}
+                        trend={summary?.averageAccuracy ? { value: 5, positive: true } : undefined}
                     />
                     <StatCard
                         title="Study Time"
-                        value={`${Math.floor(stats.timeSpent / 60)}h ${stats.timeSpent % 60}m`}
-                        subtitle="This month"
+                        value={`${Math.floor((summary?.totalHours || 0))}h ${Math.round(((summary?.totalHours || 0) % 1) * 60)}m`}
+                        subtitle="Estimated time"
                         icon={Clock}
                         variant="success"
                     />
@@ -153,8 +156,8 @@ export default function ProgressPage() {
                                         data={[
                                             {
                                                 type: 'scatterpolar',
-                                                r: skillsData.map((s) => s.value),
-                                                theta: skillsData.map((s) => s.skill),
+                                                r: skillsData.map((s) => s.score),
+                                                theta: skillsData.map((s) => s.topic),
                                                 fill: 'toself',
                                                 fillcolor: 'rgba(139, 92, 246, 0.3)',
                                                 line: { color: 'rgb(139, 92, 246)', width: 2 },
@@ -207,8 +210,8 @@ export default function ProgressPage() {
                                     <Plot
                                         data={[
                                             {
-                                                x: accuracyTrendData.map((d) => d.week),
-                                                y: accuracyTrendData.map((d) => d.accuracy),
+                                                x: accuracyTrend.map((d) => d.date),
+                                                y: accuracyTrend.map((d) => d.accuracy),
                                                 type: 'scatter',
                                                 mode: 'lines+markers',
                                                 fill: 'tozeroy',
@@ -225,10 +228,10 @@ export default function ProgressPage() {
                                                 color: '#a3a3a3',
                                             },
                                             yaxis: {
-                                                title: 'Accuracy %',
+                                                title: { text: 'Accuracy %' },
                                                 gridcolor: 'rgba(255,255,255,0.1)',
                                                 color: '#a3a3a3',
-                                                range: [50, 100],
+                                                range: [0, 100],
                                             },
                                             margin: { t: 20, b: 40, l: 50, r: 20 },
                                         }}

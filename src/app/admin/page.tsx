@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
@@ -54,7 +54,8 @@ import {
     Shield,
     Lock,
 } from 'lucide-react';
-import { mockTopics, mockQuizzes } from '@/lib/mockData';
+import { useTopics } from '@/hooks/useTopics';
+import { useQuizzes } from '@/hooks/useQuizzes';
 import { useUserStore } from '@/store/userStore';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -69,16 +70,6 @@ interface AdminTopic {
     studentsCompleted: number;
 }
 
-const adminTopics: AdminTopic[] = mockTopics.map((t) => ({
-    id: t.id,
-    title: t.title,
-    category: t.category,
-    difficulty: t.difficulty,
-    status: t.locked ? 'draft' : 'published',
-    questionsCount: Math.floor(Math.random() * 15) + 5,
-    studentsCompleted: Math.floor(Math.random() * 500) + 50,
-}));
-
 export default function AdminPage() {
     const router = useRouter();
     const { data: session, status } = useSession();
@@ -89,11 +80,26 @@ export default function AdminPage() {
     const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
+    // Fetch data from API
+    const { topics, isLoading: topicsLoading, refetch: refetchTopics } = useTopics();
+    const { quizzes, isLoading: quizzesLoading, refetch: refetchQuizzes } = useQuizzes();
+
+    // Transform topics for admin view
+    const adminTopics: AdminTopic[] = topics.map((t) => ({
+        id: t.id,
+        title: t.title,
+        category: t.category,
+        difficulty: t.difficulty,
+        status: t.locked ? 'draft' as const : 'published' as const,
+        questionsCount: 0, // Would need to query this
+        studentsCompleted: 0, // Would need to query this
+    }));
+
     const [newTopic, setNewTopic] = useState({
         title: '',
         description: '',
         category: '',
-        difficulty: 'beginner' as const,
+        difficulty: 'beginner' as 'beginner' | 'intermediate' | 'advanced',
         xpReward: 100,
     });
 
@@ -194,7 +200,7 @@ export default function AdminPage() {
     const stats = {
         totalTopics: adminTopics.length,
         publishedTopics: adminTopics.filter((t) => t.status === 'published').length,
-        totalQuizzes: mockQuizzes.length,
+        totalQuizzes: quizzes.length,
         totalUsers: 1250,
         activeToday: 342,
     };
@@ -505,7 +511,7 @@ export default function AdminPage() {
                                                             <SelectValue placeholder="Select topic" />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            {mockTopics.map((topic) => (
+                                                            {topics.map((topic) => (
                                                                 <SelectItem key={topic.id} value={topic.id}>
                                                                     {topic.title}
                                                                 </SelectItem>
@@ -552,15 +558,14 @@ export default function AdminPage() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {mockQuizzes.map((quiz) => {
-                                            const topic = mockTopics.find((t) => t.id === quiz.topicId);
+                                        {quizzes.map((quiz) => {
                                             return (
                                                 <TableRow key={quiz.id}>
                                                     <TableCell className="font-medium">{quiz.title}</TableCell>
                                                     <TableCell className="text-muted-foreground">
-                                                        {topic?.title || '-'}
+                                                        {quiz.topic?.title || '-'}
                                                     </TableCell>
-                                                    <TableCell>{quiz.questions.length}</TableCell>
+                                                    <TableCell>{quiz.questionCount}</TableCell>
                                                     <TableCell>{Math.floor(quiz.timeLimit / 60)}m</TableCell>
                                                     <TableCell className="text-primary">+{quiz.xpReward} XP</TableCell>
                                                     <TableCell className="text-right">

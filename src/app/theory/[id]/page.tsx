@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
     ArrowLeft,
-    ArrowRight,
     CheckCircle,
     Clock,
     Star,
@@ -17,65 +16,160 @@ import {
     BookOpen,
     ChevronLeft,
     ChevronRight,
+    Loader2,
 } from 'lucide-react';
-import { mockTopics, mockTheoryModules } from '@/lib/mockData';
+import { useTopic } from '@/hooks/useTopics';
 import { useUserStore } from '@/store/userStore';
+import { useUserData } from '@/hooks/useUserData';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
+interface TheorySection {
+    title: string;
+    content: string;
+    code?: string;
+}
+
 export default function TheoryTopicPage() {
     const params = useParams();
     const router = useRouter();
     const topicId = params.id as string;
-    const { addXP, addActivity } = useUserStore();
 
-    const topic = mockTopics.find((t) => t.id === topicId);
-    const theoryModule = mockTheoryModules[topicId];
+    // Fetch topic from API
+    const { topic, isLoading, error } = useTopic(topicId);
+    const { addXP } = useUserStore();
+    const { refetch: refetchUserData } = useUserData();
 
     const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
     const [isCompleting, setIsCompleting] = useState(false);
     const [showXPAnimation, setShowXPAnimation] = useState(false);
 
+    // Parse content from topic - handle both string (JSON) and array formats
+    const parseContent = (): TheorySection[] => {
+        if (!topic?.content) return [];
+
+        // If it's already an array, use it directly
+        if (Array.isArray(topic.content)) {
+            return topic.content as TheorySection[];
+        }
+
+        // If it's a string, try to parse it as JSON
+        if (typeof topic.content === 'string') {
+            try {
+                const parsed = JSON.parse(topic.content);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch {
+                return [];
+            }
+        }
+
+        return [];
+    };
+
+    const sections: TheorySection[] = parseContent();
+
+    const currentSection = sections[currentSectionIndex];
+    const progress = sections.length > 0
+        ? ((currentSectionIndex + 1) / sections.length) * 100
+        : 0;
+    const isLastSection = currentSectionIndex === sections.length - 1;
+
     useEffect(() => {
-        if (!topic) {
+        if (error) {
             router.push('/theory');
         }
-    }, [topic, router]);
-
-    if (!topic || !theoryModule) {
-        return null;
-    }
-
-    const currentSection = theoryModule.sections[currentSectionIndex];
-    const progress = ((currentSectionIndex + 1) / theoryModule.sections.length) * 100;
-    const isLastSection = currentSectionIndex === theoryModule.sections.length - 1;
+    }, [error, router]);
 
     const handleComplete = async () => {
+        if (!topic) return;
+
         setIsCompleting(true);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // Show XP animation
-        setShowXPAnimation(true);
-        addXP(topic.xpReward);
-        addActivity({
-            type: 'theory',
-            title: `Completed ${topic.title}`,
-            description: `Mastered the ${topic.title} module`,
-            xpEarned: topic.xpReward,
-        });
+        // Call API to add XP and save progress
+        try {
+            // Save XP
+            const xpResponse = await fetch('/api/users/xp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: topic.xp_reward,
+                    action: {
+                        type: 'theory',
+                        title: `Completed ${topic.title}`,
+                        description: `Mastered the ${topic.title} module`,
+                    }
+                }),
+            });
 
-        toast.success('Topic Completed!', {
-            description: `You earned ${topic.xpReward} XP!`,
-        });
+            // Save progress to database
+            await fetch('/api/user/progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    topicId: topic.id,
+                    progressPercent: 100,
+                    completed: true,
+                }),
+            });
 
-        setTimeout(() => {
-            setShowXPAnimation(false);
-            router.push('/theory');
-        }, 2000);
+            if (xpResponse.ok) {
+                // Show XP animation
+                setShowXPAnimation(true);
+                await refetchUserData();
+
+                toast.success('Topic Completed!', {
+                    description: `You earned ${topic.xp_reward} XP!`,
+                });
+
+                setTimeout(() => {
+                    setShowXPAnimation(false);
+                    router.push('/theory');
+                }, 2000);
+            } else {
+                toast.error('Could not save progress');
+                setIsCompleting(false);
+            }
+        } catch (err) {
+            console.error('Error completing topic:', err);
+            toast.error('Could not save progress');
+            setIsCompleting(false);
+        }
     };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-background">
+                <Navbar />
+                <div className="flex items-center justify-center pt-32">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+            </div>
+        );
+    }
+
+    if (!topic || sections.length === 0) {
+        return (
+            <div className="min-h-screen bg-background">
+                <Navbar />
+                <main className="pt-20 pb-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+                    <div className="text-center py-20">
+                        <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                        <h2 className="text-xl font-semibold mb-2">Content Coming Soon</h2>
+                        <p className="text-muted-foreground mb-6">
+                            The content for this topic is being prepared.
+                        </p>
+                        <Button onClick={() => router.push('/theory')}>
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            Back to Topics
+                        </Button>
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background">
@@ -112,7 +206,7 @@ export default function TheoryTopicPage() {
                                 transition={{ delay: 0.3 }}
                                 className="text-4xl font-bold text-gradient mb-2"
                             >
-                                +{topic.xpReward} XP
+                                +{topic.xp_reward} XP
                             </motion.h2>
                             <motion.p
                                 initial={{ opacity: 0 }}
@@ -152,15 +246,15 @@ export default function TheoryTopicPage() {
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                     <Clock className="w-4 h-4" />
-                                    {topic.estimatedTime} min
+                                    {topic.estimated_time} min
                                 </span>
                                 <span className="flex items-center gap-1">
                                     <Star className="w-4 h-4 text-primary" />
-                                    +{topic.xpReward} XP
+                                    +{topic.xp_reward} XP
                                 </span>
                                 <span className="flex items-center gap-1">
                                     <BookOpen className="w-4 h-4" />
-                                    {theoryModule.sections.length} sections
+                                    {sections.length} sections
                                 </span>
                             </div>
                         </div>
@@ -170,7 +264,7 @@ export default function TheoryTopicPage() {
                     <div className="mt-6">
                         <div className="flex justify-between text-sm mb-2">
                             <span className="text-muted-foreground">
-                                Section {currentSectionIndex + 1} of {theoryModule.sections.length}
+                                Section {currentSectionIndex + 1} of {sections.length}
                             </span>
                             <span className="font-medium">{Math.round(progress)}%</span>
                         </div>
@@ -188,27 +282,39 @@ export default function TheoryTopicPage() {
                 >
                     <h2 className="text-xl font-semibold mb-6">{currentSection.title}</h2>
 
-                    {/* Markdown Content */}
+                    {/* Content */}
                     <div className="prose prose-invert max-w-none">
                         <MarkdownContent content={currentSection.content} />
                     </div>
 
-                    {/* Interactive Visualization */}
-                    {currentSectionIndex === 1 && topicId === 'linear-regression' && (
+                    {/* Code Block if present */}
+                    {currentSection.code && (
+                        <div className="mt-6">
+                            <h3 className="text-lg font-semibold mb-3">Code Example</h3>
+                            <pre className="bg-muted/50 rounded-lg p-4 overflow-x-auto">
+                                <code className="text-sm text-muted-foreground whitespace-pre">
+                                    {currentSection.code}
+                                </code>
+                            </pre>
+                        </div>
+                    )}
+
+                    {/* Interactive Visualizations based on topic */}
+                    {topic.title.toLowerCase().includes('regression') && currentSectionIndex === 1 && (
                         <div className="mt-8">
                             <h3 className="text-lg font-semibold mb-4">Interactive Visualization</h3>
                             <RegressionPlot />
                         </div>
                     )}
 
-                    {topicId === 'clustering' && (
+                    {topic.title.toLowerCase().includes('clustering') && (
                         <div className="mt-8">
                             <h3 className="text-lg font-semibold mb-4">Clustering Visualization</h3>
                             <ClusteringPlot />
                         </div>
                     )}
 
-                    {topicId === 'pca' && (
+                    {topic.title.toLowerCase().includes('pca') && (
                         <div className="mt-8">
                             <h3 className="text-lg font-semibold mb-4">PCA 2D Projection</h3>
                             <PCAPlot />
@@ -244,7 +350,7 @@ export default function TheoryTopicPage() {
                         </Button>
                     ) : (
                         <Button
-                            onClick={() => setCurrentSectionIndex((i) => Math.min(theoryModule.sections.length - 1, i + 1))}
+                            onClick={() => setCurrentSectionIndex((i) => Math.min(sections.length - 1, i + 1))}
                         >
                             Next
                             <ChevronRight className="w-4 h-4 ml-2" />
@@ -254,7 +360,7 @@ export default function TheoryTopicPage() {
 
                 {/* Section Navigation Dots */}
                 <div className="flex justify-center gap-2 mt-8">
-                    {theoryModule.sections.map((_, index) => (
+                    {sections.map((_, index) => (
                         <button
                             key={index}
                             onClick={() => setCurrentSectionIndex(index)}
@@ -276,49 +382,33 @@ export default function TheoryTopicPage() {
 
 // Simple Markdown-like content renderer
 function MarkdownContent({ content }: { content: string }) {
+    if (!content) return null;
+
     const lines = content.trim().split('\n');
 
     return (
         <div className="space-y-4">
-            {lines.map((line, i) => {
-                const trimmed = line.trim();
-
-                if (trimmed.startsWith('# ')) {
-                    return <h1 key={i} className="text-2xl font-bold mt-6 mb-4">{trimmed.slice(2)}</h1>;
+            {lines.map((line, index) => {
+                // Headers
+                if (line.startsWith('### ')) {
+                    return <h4 key={index} className="text-lg font-semibold mt-6">{line.slice(4)}</h4>;
                 }
-                if (trimmed.startsWith('## ')) {
-                    return <h2 key={i} className="text-xl font-semibold mt-5 mb-3">{trimmed.slice(3)}</h2>;
+                if (line.startsWith('## ')) {
+                    return <h3 key={index} className="text-xl font-semibold mt-6">{line.slice(3)}</h3>;
                 }
-                if (trimmed.startsWith('### ')) {
-                    return <h3 key={i} className="text-lg font-medium mt-4 mb-2">{trimmed.slice(4)}</h3>;
-                }
-                if (trimmed.startsWith('- ')) {
+                // List items
+                if (line.startsWith('- ')) {
                     return (
-                        <li key={i} className="flex items-start gap-2 ml-4">
-                            <span className="text-primary mt-1">•</span>
-                            <span>{trimmed.slice(2)}</span>
+                        <li key={index} className="ml-4 text-muted-foreground">
+                            {line.slice(2)}
                         </li>
                     );
                 }
-                if (trimmed.startsWith('```')) {
-                    return null; // Skip code block markers
+                // Regular paragraph
+                if (line.trim()) {
+                    return <p key={index} className="text-muted-foreground leading-relaxed">{line}</p>;
                 }
-                if (trimmed.length === 0) {
-                    return <div key={i} className="h-2" />;
-                }
-
-                // Handle inline formatting
-                const formatted = trimmed
-                    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary font-semibold">$1</strong>')
-                    .replace(/`(.*?)`/g, '<code class="px-1.5 py-0.5 rounded bg-muted text-sm font-mono">$1</code>');
-
-                return (
-                    <p
-                        key={i}
-                        className="text-muted-foreground leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: formatted }}
-                    />
-                );
+                return null;
             })}
         </div>
     );
@@ -326,76 +416,77 @@ function MarkdownContent({ content }: { content: string }) {
 
 // Interactive Regression Plot
 function RegressionPlot() {
+    const [slope, setSlope] = useState(1);
+    const [intercept, setIntercept] = useState(0);
+
     // Generate sample data
-    const x = Array.from({ length: 50 }, (_, i) => i + Math.random() * 10);
-    const y = x.map((xi) => 2 * xi + 10 + (Math.random() - 0.5) * 20);
-
-    // Calculate regression line
-    const n = x.length;
-    const sumX = x.reduce((a, b) => a + b, 0);
-    const sumY = y.reduce((a, b) => a + b, 0);
-    const sumXY = x.reduce((acc, xi, i) => acc + xi * y[i], 0);
-    const sumX2 = x.reduce((acc, xi) => acc + xi * xi, 0);
-
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-
-    const lineX = [0, 60];
-    const lineY = lineX.map((xi) => slope * xi + intercept);
+    const xData = Array.from({ length: 20 }, (_, i) => i * 0.5);
+    const yData = xData.map(x => 2 * x + 1 + (Math.random() - 0.5) * 3);
+    const lineY = xData.map(x => slope * x + intercept);
 
     return (
-        <div className="rounded-xl overflow-hidden bg-card/50 border border-border/50">
-            <Plot
-                data={[
-                    {
-                        x,
-                        y,
-                        mode: 'markers',
-                        type: 'scatter',
-                        name: 'Data Points',
-                        marker: {
-                            color: 'rgb(139, 92, 246)',
-                            size: 8,
-                            opacity: 0.7,
+        <div className="space-y-4">
+            <div className="bg-muted/50 rounded-lg p-4">
+                <Plot
+                    data={[
+                        {
+                            x: xData,
+                            y: yData,
+                            type: 'scatter',
+                            mode: 'markers',
+                            name: 'Data Points',
+                            marker: { color: '#8b5cf6', size: 10 },
                         },
-                    },
-                    {
-                        x: lineX,
-                        y: lineY,
-                        mode: 'lines',
-                        type: 'scatter',
-                        name: 'Regression Line',
-                        line: {
-                            color: 'rgb(34, 211, 238)',
-                            width: 3,
+                        {
+                            x: xData,
+                            y: lineY,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: 'Regression Line',
+                            line: { color: '#06b6d4', width: 3 },
                         },
-                    },
-                ]}
-                layout={{
-                    title: {
-                        text: 'Linear Regression Visualization',
-                        font: { color: '#e5e5e5' },
-                    },
-                    paper_bgcolor: 'transparent',
-                    plot_bgcolor: 'rgba(0,0,0,0.2)',
-                    xaxis: {
-                        title: 'X',
-                        gridcolor: 'rgba(255,255,255,0.1)',
-                        color: '#a3a3a3',
-                    },
-                    yaxis: {
-                        title: 'Y',
-                        gridcolor: 'rgba(255,255,255,0.1)',
-                        color: '#a3a3a3',
-                    },
-                    legend: {
-                        font: { color: '#e5e5e5' },
-                    },
-                    margin: { t: 50, b: 50, l: 50, r: 30 },
-                }}
-                config={{ responsive: true, displayModeBar: false }}
-                style={{ width: '100%', height: '400px' }}
-            />
+                    ]}
+                    layout={{
+                        title: 'Interactive Linear Regression',
+                        paper_bgcolor: 'transparent',
+                        plot_bgcolor: 'transparent',
+                        font: { color: '#a1a1aa' },
+                        xaxis: { title: 'X', gridcolor: '#27272a' },
+                        yaxis: { title: 'Y', gridcolor: '#27272a' },
+                        showlegend: true,
+                        legend: { x: 0, y: 1 },
+                        margin: { t: 50, r: 20, b: 50, l: 50 },
+                    }}
+                    config={{ displayModeBar: false }}
+                    style={{ width: '100%', height: 400 }}
+                />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="text-sm text-muted-foreground">Slope: {slope.toFixed(2)}</label>
+                    <input
+                        type="range"
+                        min="-3"
+                        max="5"
+                        step="0.1"
+                        value={slope}
+                        onChange={(e) => setSlope(parseFloat(e.target.value))}
+                        className="w-full"
+                    />
+                </div>
+                <div>
+                    <label className="text-sm text-muted-foreground">Intercept: {intercept.toFixed(2)}</label>
+                    <input
+                        type="range"
+                        min="-5"
+                        max="10"
+                        step="0.1"
+                        value={intercept}
+                        onChange={(e) => setIntercept(parseFloat(e.target.value))}
+                        className="w-full"
+                    />
+                </div>
+            </div>
         </div>
     );
 }
@@ -405,58 +496,56 @@ function ClusteringPlot() {
     // Generate clustered data
     const generateCluster = (cx: number, cy: number, n: number) => {
         return Array.from({ length: n }, () => ({
-            x: cx + (Math.random() - 0.5) * 3,
-            y: cy + (Math.random() - 0.5) * 3,
+            x: cx + (Math.random() - 0.5) * 2,
+            y: cy + (Math.random() - 0.5) * 2,
         }));
     };
 
     const cluster1 = generateCluster(2, 2, 30);
-    const cluster2 = generateCluster(8, 8, 30);
+    const cluster2 = generateCluster(7, 7, 30);
     const cluster3 = generateCluster(2, 8, 30);
 
     return (
-        <div className="rounded-xl overflow-hidden bg-card/50 border border-border/50">
+        <div className="bg-muted/50 rounded-lg p-4">
             <Plot
                 data={[
                     {
-                        x: cluster1.map((p) => p.x),
-                        y: cluster1.map((p) => p.y),
-                        mode: 'markers',
+                        x: cluster1.map(p => p.x),
+                        y: cluster1.map(p => p.y),
                         type: 'scatter',
+                        mode: 'markers',
                         name: 'Cluster 1',
-                        marker: { color: 'rgb(139, 92, 246)', size: 10 },
+                        marker: { color: '#8b5cf6', size: 10 },
                     },
                     {
-                        x: cluster2.map((p) => p.x),
-                        y: cluster2.map((p) => p.y),
-                        mode: 'markers',
+                        x: cluster2.map(p => p.x),
+                        y: cluster2.map(p => p.y),
                         type: 'scatter',
+                        mode: 'markers',
                         name: 'Cluster 2',
-                        marker: { color: 'rgb(34, 211, 238)', size: 10 },
+                        marker: { color: '#06b6d4', size: 10 },
                     },
                     {
-                        x: cluster3.map((p) => p.x),
-                        y: cluster3.map((p) => p.y),
-                        mode: 'markers',
+                        x: cluster3.map(p => p.x),
+                        y: cluster3.map(p => p.y),
                         type: 'scatter',
+                        mode: 'markers',
                         name: 'Cluster 3',
-                        marker: { color: 'rgb(52, 211, 153)', size: 10 },
+                        marker: { color: '#f97316', size: 10 },
                     },
                 ]}
                 layout={{
-                    title: {
-                        text: 'K-Means Clustering',
-                        font: { color: '#e5e5e5' },
-                    },
+                    title: 'K-Means Clustering Example',
                     paper_bgcolor: 'transparent',
-                    plot_bgcolor: 'rgba(0,0,0,0.2)',
-                    xaxis: { gridcolor: 'rgba(255,255,255,0.1)', color: '#a3a3a3' },
-                    yaxis: { gridcolor: 'rgba(255,255,255,0.1)', color: '#a3a3a3' },
-                    legend: { font: { color: '#e5e5e5' } },
-                    margin: { t: 50, b: 50, l: 50, r: 30 },
+                    plot_bgcolor: 'transparent',
+                    font: { color: '#a1a1aa' },
+                    xaxis: { title: 'Feature 1', gridcolor: '#27272a' },
+                    yaxis: { title: 'Feature 2', gridcolor: '#27272a' },
+                    showlegend: true,
+                    margin: { t: 50, r: 20, b: 50, l: 50 },
                 }}
-                config={{ responsive: true, displayModeBar: false }}
-                style={{ width: '100%', height: '400px' }}
+                config={{ displayModeBar: false }}
+                style={{ width: '100%', height: 400 }}
             />
         </div>
     );
@@ -467,51 +556,44 @@ function PCAPlot() {
     // Simulated 2D PCA projection
     const generatePCAData = () => {
         const data = [];
-        const classes = ['Class A', 'Class B', 'Class C'];
-        const colors = ['rgb(139, 92, 246)', 'rgb(34, 211, 238)', 'rgb(251, 146, 60)'];
-
-        for (let c = 0; c < 3; c++) {
-            const cx = (c - 1) * 3;
-            const cy = Math.sin(c * 2) * 2;
-
-            data.push({
-                x: Array.from({ length: 40 }, () => cx + (Math.random() - 0.5) * 4),
-                y: Array.from({ length: 40 }, () => cy + (Math.random() - 0.5) * 4),
-                mode: 'markers',
-                type: 'scatter',
-                name: classes[c],
-                marker: { color: colors[c], size: 8, opacity: 0.8 },
-            });
+        for (let i = 0; i < 100; i++) {
+            const category = i % 3;
+            const pc1 = (Math.random() - 0.5) * 4 + (category - 1) * 3;
+            const pc2 = (Math.random() - 0.5) * 2 + (category === 1 ? 1 : -1);
+            data.push({ pc1, pc2, category });
         }
         return data;
     };
 
+    const pcaData = generatePCAData();
+
     return (
-        <div className="rounded-xl overflow-hidden bg-card/50 border border-border/50">
+        <div className="bg-muted/50 rounded-lg p-4">
             <Plot
-                data={generatePCAData() as Plotly.Data[]}
+                data={[0, 1, 2].map(cat => ({
+                    x: pcaData.filter(d => d.category === cat).map(d => d.pc1),
+                    y: pcaData.filter(d => d.category === cat).map(d => d.pc2),
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: `Class ${cat + 1}`,
+                    marker: {
+                        color: ['#8b5cf6', '#06b6d4', '#f97316'][cat],
+                        size: 8,
+                        opacity: 0.7,
+                    },
+                }))}
                 layout={{
-                    title: {
-                        text: 'PCA 2D Projection',
-                        font: { color: '#e5e5e5' },
-                    },
+                    title: 'PCA 2D Projection',
                     paper_bgcolor: 'transparent',
-                    plot_bgcolor: 'rgba(0,0,0,0.2)',
-                    xaxis: {
-                        title: 'Principal Component 1',
-                        gridcolor: 'rgba(255,255,255,0.1)',
-                        color: '#a3a3a3',
-                    },
-                    yaxis: {
-                        title: 'Principal Component 2',
-                        gridcolor: 'rgba(255,255,255,0.1)',
-                        color: '#a3a3a3',
-                    },
-                    legend: { font: { color: '#e5e5e5' } },
-                    margin: { t: 50, b: 50, l: 60, r: 30 },
+                    plot_bgcolor: 'transparent',
+                    font: { color: '#a1a1aa' },
+                    xaxis: { title: 'Principal Component 1', gridcolor: '#27272a' },
+                    yaxis: { title: 'Principal Component 2', gridcolor: '#27272a' },
+                    showlegend: true,
+                    margin: { t: 50, r: 20, b: 50, l: 50 },
                 }}
-                config={{ responsive: true, displayModeBar: false }}
-                style={{ width: '100%', height: '400px' }}
+                config={{ displayModeBar: false }}
+                style={{ width: '100%', height: 400 }}
             />
         </div>
     );

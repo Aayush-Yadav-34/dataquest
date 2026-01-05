@@ -20,24 +20,42 @@ import {
     Clock,
     Star,
     Brain,
+    Loader2,
 } from 'lucide-react';
-import { mockQuizzes, mockQuizQuestions, mockTopics } from '@/lib/mockData';
-import { useUserStore } from '@/store/userStore';
+import { useQuizzes, useQuiz, Quiz, QuizQuestion } from '@/hooks/useQuizzes';
+import { useUserData } from '@/hooks/useUserData';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { QuizQuestion } from '@/types';
 
 type QuizState = 'selection' | 'in-progress' | 'completed';
 
+interface QuizResults {
+    correctCount: number;
+    totalQuestions: number;
+    accuracy: number;
+    passed: boolean;
+    xpEarned: number;
+}
+
 export default function QuizPage() {
-    const { addXP, addActivity } = useUserStore();
+    // Fetch quizzes from API
+    const { quizzes, isLoading: quizzesLoading } = useQuizzes();
+    const { refetch: refetchUserData } = useUserData();
+
     const [quizState, setQuizState] = useState<QuizState>('selection');
-    const [selectedQuiz, setSelectedQuiz] = useState<typeof mockQuizzes[0] | null>(null);
+    const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>([]);
     const [timeLeft, setTimeLeft] = useState(0);
     const [showExplanation, setShowExplanation] = useState(false);
     const [showXPAnimation, setShowXPAnimation] = useState(false);
+    const [results, setResults] = useState<QuizResults | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isChallengeMode, setIsChallengeMode] = useState(false);
+    const [challengeQuestions, setChallengeQuestions] = useState<QuizQuestion[]>([]);
+
+    // Fetch selected quiz with questions
+    const { quiz: selectedQuiz, isLoading: quizLoading, submitQuiz } = useQuiz(selectedQuizId);
 
     // Timer effect
     useEffect(() => {
@@ -62,13 +80,14 @@ export default function QuizPage() {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const startQuiz = (quiz: typeof mockQuizzes[0]) => {
-        setSelectedQuiz(quiz);
+    const startQuiz = async (quiz: Quiz) => {
+        setSelectedQuizId(quiz.id);
         setQuizState('in-progress');
         setCurrentQuestionIndex(0);
-        setSelectedAnswers(new Array(quiz.questions.length).fill(null));
+        setSelectedAnswers(new Array(quiz.questionCount).fill(null));
         setTimeLeft(quiz.timeLimit);
         setShowExplanation(false);
+        setResults(null);
     };
 
     const handleAnswerSelect = (answerIndex: number) => {
@@ -82,72 +101,138 @@ export default function QuizPage() {
 
     const handleNextQuestion = () => {
         setShowExplanation(false);
-        if (currentQuestionIndex < (selectedQuiz?.questions.length || 0) - 1) {
+        if (selectedQuiz?.questions && currentQuestionIndex < selectedQuiz.questions.length - 1) {
             setCurrentQuestionIndex((prev) => prev + 1);
         } else {
             handleQuizComplete();
         }
     };
 
-    const handleQuizComplete = useCallback(() => {
-        if (!selectedQuiz) return;
+    const handleQuizComplete = useCallback(async () => {
+        if (!selectedQuiz || isSubmitting) return;
 
+        setIsSubmitting(true);
         setQuizState('completed');
 
-        // Calculate results
-        const correctCount = selectedAnswers.filter(
-            (answer, i) => answer === selectedQuiz.questions[i].correctAnswer
-        ).length;
-        const accuracy = (correctCount / selectedQuiz.questions.length) * 100;
-        const passed = accuracy >= selectedQuiz.passingScore;
-        const xpEarned = passed ? selectedQuiz.xpReward : Math.floor(selectedQuiz.xpReward * 0.3);
+        // Calculate time taken
+        const timeTaken = selectedQuiz.timeLimit - timeLeft;
 
-        // Award XP
-        if (passed) {
-            setShowXPAnimation(true);
-            setTimeout(() => setShowXPAnimation(false), 2000);
+        // Submit to API
+        const result = await submitQuiz(
+            selectedAnswers.map(a => a ?? -1),
+            timeTaken
+        );
+
+        if (result?.success) {
+            setResults({
+                correctCount: result.correctCount,
+                totalQuestions: result.totalQuestions,
+                accuracy: result.score,
+                passed: result.passed,
+                xpEarned: result.xpEarned,
+            });
+
+            if (result.passed) {
+                setShowXPAnimation(true);
+                setTimeout(() => setShowXPAnimation(false), 2000);
+            }
+
+            // Refresh user data to update XP display
+            await refetchUserData();
+
+            toast.success(result.passed ? 'Quiz Passed!' : 'Quiz Completed', {
+                description: `You earned ${result.xpEarned} XP!`,
+            });
+        } else {
+            // Fallback: Calculate locally if API fails
+            const questions = selectedQuiz.questions || [];
+            const correctCount = selectedAnswers.filter(
+                (answer, i) => answer === questions[i]?.correctAnswer
+            ).length;
+            const accuracy = (correctCount / questions.length) * 100;
+            const passed = accuracy >= selectedQuiz.passingScore;
+            const xpEarned = passed ? selectedQuiz.xpReward : Math.floor(selectedQuiz.xpReward * 0.3);
+
+            setResults({
+                correctCount,
+                totalQuestions: questions.length,
+                accuracy,
+                passed,
+                xpEarned,
+            });
+
+            toast.error('Could not save quiz result', {
+                description: 'Your progress may not be saved.',
+            });
         }
 
-        addXP(xpEarned);
-        addActivity({
-            type: 'quiz',
-            title: `${passed ? 'Passed' : 'Completed'} ${selectedQuiz.title}`,
-            description: `Scored ${accuracy.toFixed(0)}% (${correctCount}/${selectedQuiz.questions.length})`,
-            xpEarned,
-        });
-
-        toast.success(passed ? 'Quiz Passed!' : 'Quiz Completed', {
-            description: `You earned ${xpEarned} XP!`,
-        });
-    }, [selectedQuiz, selectedAnswers, addXP, addActivity]);
+        setIsSubmitting(false);
+    }, [selectedQuiz, selectedAnswers, timeLeft, submitQuiz, isSubmitting, refetchUserData]);
 
     const resetQuiz = () => {
         setQuizState('selection');
-        setSelectedQuiz(null);
+        setSelectedQuizId(null);
         setCurrentQuestionIndex(0);
         setSelectedAnswers([]);
         setTimeLeft(0);
         setShowExplanation(false);
+        setResults(null);
+        setIsChallengeMode(false);
+        setChallengeQuestions([]);
     };
 
-    // Calculate results for completed state
-    const results = selectedQuiz ? {
-        correctCount: selectedAnswers.filter(
-            (answer, i) => answer === selectedQuiz.questions[i].correctAnswer
-        ).length,
-        totalQuestions: selectedQuiz.questions.length,
-        accuracy: (selectedAnswers.filter(
-            (answer, i) => answer === selectedQuiz.questions[i].correctAnswer
-        ).length / selectedQuiz.questions.length) * 100,
-        passed: (selectedAnswers.filter(
-            (answer, i) => answer === selectedQuiz.questions[i].correctAnswer
-        ).length / selectedQuiz.questions.length) * 100 >= selectedQuiz.passingScore,
-        xpEarned: (selectedAnswers.filter(
-            (answer, i) => answer === selectedQuiz.questions[i].correctAnswer
-        ).length / selectedQuiz.questions.length) * 100 >= selectedQuiz.passingScore
-            ? selectedQuiz.xpReward
-            : Math.floor(selectedQuiz.xpReward * 0.3),
-    } : null;
+    // Start Challenge Mode with random questions from all quizzes
+    const startChallengeMode = async () => {
+        // Fetch a random quiz to get its questions
+        if (quizzes.length === 0) {
+            toast.error('No quizzes available for Challenge Mode');
+            return;
+        }
+
+        // Collect questions from multiple quizzes
+        const allQuestions: QuizQuestion[] = [];
+
+        // Fetch questions from up to 3 random quizzes
+        const shuffledQuizzes = [...quizzes].sort(() => Math.random() - 0.5).slice(0, 3);
+
+        for (const quiz of shuffledQuizzes) {
+            try {
+                const response = await fetch(`/api/quizzes/${quiz.id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.quiz?.questions) {
+                        allQuestions.push(...data.quiz.questions);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching quiz questions:', error);
+            }
+        }
+
+        if (allQuestions.length === 0) {
+            toast.error('Could not load questions for Challenge Mode');
+            return;
+        }
+
+        // Shuffle and select 5 random questions
+        const shuffledQuestions = allQuestions.sort(() => Math.random() - 0.5).slice(0, 5);
+
+        setChallengeQuestions(shuffledQuestions);
+        setIsChallengeMode(true);
+        setSelectedAnswers(new Array(shuffledQuestions.length).fill(null));
+        setTimeLeft(600); // 10 minutes for challenge mode
+        setQuizState('in-progress');
+        toast.success('Challenge Mode started! Good luck!');
+    };
+
+    // Current question - use challenge questions if in challenge mode
+    const currentQuestion = isChallengeMode
+        ? challengeQuestions[currentQuestionIndex]
+        : selectedQuiz?.questions?.[currentQuestionIndex];
+
+    const totalQuestions = isChallengeMode
+        ? challengeQuestions.length
+        : (selectedQuiz?.questions?.length || 0);
 
     return (
         <div className="min-h-screen bg-background">
@@ -155,7 +240,7 @@ export default function QuizPage() {
 
             {/* XP Animation Overlay */}
             <AnimatePresence>
-                {showXPAnimation && selectedQuiz && (
+                {showXPAnimation && results && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -205,169 +290,183 @@ export default function QuizPage() {
                             </p>
                         </div>
 
-                        {/* Quick Quiz */}
-                        <section>
-                            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                                <Brain className="w-5 h-5 text-primary" />
-                                Quick Quizzes
-                            </h2>
-                            <div className="grid md:grid-cols-2 gap-4">
-                                {mockQuizzes.map((quiz) => {
-                                    const topic = mockTopics.find((t) => t.id === quiz.topicId);
-                                    return (
-                                        <motion.div
-                                            key={quiz.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            whileHover={{ scale: 1.02 }}
-                                            onClick={() => startQuiz(quiz)}
-                                            className="glass-card p-6 cursor-pointer hover:border-primary/50 transition-all"
-                                        >
-                                            <div className="flex items-start gap-4">
-                                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-2xl flex-shrink-0">
-                                                    {topic?.icon || '❓'}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h3 className="font-semibold mb-1">{quiz.title}</h3>
-                                                    <p className="text-sm text-muted-foreground mb-3">{quiz.description}</p>
-                                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                        <span className="flex items-center gap-1">
-                                                            <Target className="w-4 h-4" />
-                                                            {quiz.questions.length} questions
-                                                        </span>
-                                                        <span className="flex items-center gap-1">
-                                                            <Clock className="w-4 h-4" />
-                                                            {Math.floor(quiz.timeLimit / 60)}m
-                                                        </span>
-                                                        <span className="flex items-center gap-1 text-primary">
-                                                            <Star className="w-4 h-4" />
-                                                            +{quiz.xpReward} XP
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                                            </div>
-                                        </motion.div>
-                                    );
-                                })}
+                        {quizzesLoading ? (
+                            <div className="flex items-center justify-center py-20">
+                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
                             </div>
-                        </section>
+                        ) : (
+                            <>
+                                <section>
+                                    <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                        <Brain className="w-5 h-5 text-primary" />
+                                        Available Quizzes
+                                    </h2>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        {quizzes.map((quiz) => (
+                                            <motion.div
+                                                key={quiz.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                whileHover={{ scale: 1.02 }}
+                                                onClick={() => startQuiz(quiz)}
+                                                className="glass-card p-6 cursor-pointer hover:border-primary/50 transition-all"
+                                            >
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-2xl flex-shrink-0">
+                                                        {quiz.topic?.icon || '❓'}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h3 className="font-semibold mb-1">{quiz.title}</h3>
+                                                        <p className="text-sm text-muted-foreground mb-3">
+                                                            {quiz.topic?.title || 'General Quiz'}
+                                                        </p>
+                                                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                                            <span className="flex items-center gap-1">
+                                                                <Target className="w-4 h-4" />
+                                                                {quiz.questionCount} questions
+                                                            </span>
+                                                            <span className="flex items-center gap-1">
+                                                                <Clock className="w-4 h-4" />
+                                                                {Math.floor(quiz.timeLimit / 60)}m
+                                                            </span>
+                                                            <span className="flex items-center gap-1 text-primary">
+                                                                <Star className="w-4 h-4" />
+                                                                +{quiz.xpReward} XP
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
 
-                        {/* All Questions Quiz */}
-                        <section>
-                            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                                <Trophy className="w-5 h-5 text-yellow-500" />
-                                Challenge Mode
-                            </h2>
-                            <motion.div
-                                whileHover={{ scale: 1.02 }}
-                                onClick={() => startQuiz({
-                                    id: 'challenge',
-                                    topicId: 'all',
-                                    title: 'Ultimate ML Challenge',
-                                    description: 'Test all your ML knowledge',
-                                    questions: mockQuizQuestions,
-                                    timeLimit: 600,
-                                    xpReward: 200,
-                                    passingScore: 70,
-                                })}
-                                className="glass-card p-6 cursor-pointer hover:border-primary/50 transition-all border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-xl bg-gradient-primary flex items-center justify-center text-3xl glow">
-                                        🏆
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-xl font-semibold mb-1">Ultimate ML Challenge</h3>
-                                        <p className="text-muted-foreground mb-2">
-                                            All questions, more time, bigger rewards!
-                                        </p>
-                                        <div className="flex items-center gap-4 text-sm">
-                                            <span className="flex items-center gap-1">
-                                                <Target className="w-4 h-4" />
-                                                {mockQuizQuestions.length} questions
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <Clock className="w-4 h-4" />
-                                                10 min
-                                            </span>
-                                            <span className="flex items-center gap-1 text-primary font-semibold">
-                                                <Zap className="w-4 h-4" />
-                                                +200 XP
-                                            </span>
+                                    {quizzes.length === 0 && (
+                                        <div className="text-center py-12 text-muted-foreground">
+                                            <Brain className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                                            <p>No quizzes available yet.</p>
                                         </div>
-                                    </div>
-                                    <ArrowRight className="w-6 h-6 text-primary" />
-                                </div>
-                            </motion.div>
-                        </section>
+                                    )}
+                                </section>
+
+                                {/* Challenge Mode */}
+                                <section className="mt-8">
+                                    <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                                        <Trophy className="w-5 h-5 text-yellow-500" />
+                                        Challenge Mode
+                                    </h2>
+                                    <motion.div
+                                        whileHover={{ scale: 1.02 }}
+                                        onClick={startChallengeMode}
+                                        className="glass-card p-6 cursor-pointer hover:border-yellow-500/50 transition-all bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/20"
+                                    >
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-2xl flex-shrink-0">
+                                                🏆
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold mb-1 text-yellow-500">Ultimate ML Challenge</h3>
+                                                <p className="text-sm text-muted-foreground mb-3">
+                                                    Random questions from all topics!
+                                                </p>
+                                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                                    <span className="flex items-center gap-1">
+                                                        <Target className="w-4 h-4" />
+                                                        5 random questions
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <Clock className="w-4 h-4" />
+                                                        10 min
+                                                    </span>
+                                                    <span className="flex items-center gap-1 text-yellow-500">
+                                                        <Star className="w-4 h-4" />
+                                                        +200 XP
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <ChevronRight className="w-5 h-5 text-yellow-500" />
+                                        </div>
+                                    </motion.div>
+                                </section>
+                            </>
+                        )}
                     </motion.div>
                 )}
 
                 {/* In Progress */}
-                {quizState === 'in-progress' && selectedQuiz && (
+                {quizState === 'in-progress' && (selectedQuiz || isChallengeMode) && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         className="space-y-6"
                     >
-                        {/* Header */}
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h2 className="font-semibold">{selectedQuiz.title}</h2>
-                                <p className="text-sm text-muted-foreground">
-                                    Question {currentQuestionIndex + 1} of {selectedQuiz.questions.length}
-                                </p>
+                        {(quizLoading && !isChallengeMode) || !currentQuestion ? (
+                            <div className="flex items-center justify-center py-20">
+                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
                             </div>
-                            <div className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-full font-mono font-bold",
-                                timeLeft <= 30 ? "bg-red-500/20 text-red-500" : "bg-primary/20 text-primary"
-                            )}>
-                                <Timer className="w-5 h-5" />
-                                {formatTime(timeLeft)}
-                            </div>
-                        </div>
+                        ) : (
+                            <>
+                                {/* Header */}
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="font-semibold">
+                                            {isChallengeMode ? 'Ultimate ML Challenge' : selectedQuiz?.title}
+                                        </h2>
+                                        <p className="text-sm text-muted-foreground">
+                                            Question {currentQuestionIndex + 1} of {totalQuestions}
+                                        </p>
+                                    </div>
+                                    <div className={cn(
+                                        "flex items-center gap-2 px-4 py-2 rounded-full font-mono font-bold",
+                                        timeLeft <= 30 ? "bg-red-500/20 text-red-500" : "bg-primary/20 text-primary"
+                                    )}>
+                                        <Timer className="w-5 h-5" />
+                                        {formatTime(timeLeft)}
+                                    </div>
+                                </div>
 
-                        {/* Progress */}
-                        <Progress
-                            value={((currentQuestionIndex + 1) / selectedQuiz.questions.length) * 100}
-                            className="h-2"
-                        />
-
-                        {/* Question Card */}
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={currentQuestionIndex}
-                                initial={{ opacity: 0, x: 50 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -50 }}
-                            >
-                                <QuestionCard
-                                    question={selectedQuiz.questions[currentQuestionIndex]}
-                                    selectedAnswer={selectedAnswers[currentQuestionIndex]}
-                                    showExplanation={showExplanation}
-                                    onSelectAnswer={handleAnswerSelect}
+                                {/* Progress */}
+                                <Progress
+                                    value={((currentQuestionIndex + 1) / (totalQuestions || 1)) * 100}
+                                    className="h-2"
                                 />
-                            </motion.div>
-                        </AnimatePresence>
 
-                        {/* Navigation */}
-                        {showExplanation && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                            >
-                                <Button
-                                    onClick={handleNextQuestion}
-                                    className="w-full h-14 text-lg bg-gradient-primary hover:opacity-90"
-                                >
-                                    {currentQuestionIndex < selectedQuiz.questions.length - 1 ? (
-                                        <>Next Question <ArrowRight className="w-5 h-5 ml-2" /></>
-                                    ) : (
-                                        <>View Results <Trophy className="w-5 h-5 ml-2" /></>
-                                    )}
-                                </Button>
-                            </motion.div>
+                                {/* Question Card */}
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={currentQuestionIndex}
+                                        initial={{ opacity: 0, x: 50 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -50 }}
+                                    >
+                                        <QuestionCard
+                                            question={currentQuestion}
+                                            selectedAnswer={selectedAnswers[currentQuestionIndex]}
+                                            showExplanation={showExplanation}
+                                            onSelectAnswer={handleAnswerSelect}
+                                        />
+                                    </motion.div>
+                                </AnimatePresence>
+
+                                {/* Navigation */}
+                                {showExplanation && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                    >
+                                        <Button
+                                            onClick={handleNextQuestion}
+                                            className="w-full h-14 text-lg bg-gradient-primary hover:opacity-90"
+                                        >
+                                            {currentQuestionIndex < totalQuestions - 1 ? (
+                                                <>Next Question <ArrowRight className="w-5 h-5 ml-2" /></>
+                                            ) : (
+                                                <>View Results <Trophy className="w-5 h-5 ml-2" /></>
+                                            )}
+                                        </Button>
+                                    </motion.div>
+                                )}
+                            </>
                         )}
                     </motion.div>
                 )}
@@ -428,21 +527,23 @@ export default function QuizPage() {
                             </div>
 
                             {/* Question Summary */}
-                            <div className="flex justify-center gap-2 mb-8">
-                                {selectedQuiz.questions.map((q, i) => (
-                                    <div
-                                        key={i}
-                                        className={cn(
-                                            "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium",
-                                            selectedAnswers[i] === q.correctAnswer
-                                                ? "bg-emerald-500/20 text-emerald-500"
-                                                : "bg-red-500/20 text-red-500"
-                                        )}
-                                    >
-                                        {i + 1}
-                                    </div>
-                                ))}
-                            </div>
+                            {selectedQuiz.questions && (
+                                <div className="flex justify-center gap-2 mb-8">
+                                    {selectedQuiz.questions.map((q, i) => (
+                                        <div
+                                            key={i}
+                                            className={cn(
+                                                "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium",
+                                                selectedAnswers[i] === q.correctAnswer
+                                                    ? "bg-emerald-500/20 text-emerald-500"
+                                                    : "bg-red-500/20 text-red-500"
+                                            )}
+                                        >
+                                            {i + 1}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
 
                             {/* Actions */}
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">

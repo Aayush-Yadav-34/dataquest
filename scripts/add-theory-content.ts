@@ -506,9 +506,10 @@ async function addTheoryContent() {
     console.log('📚 Adding theory content to topics...\n');
 
     for (const [title, content] of Object.entries(theoryContent)) {
+        // Store content as JSON array directly, not as a string
         const { error } = await supabase
             .from('topics')
-            .update({ content: JSON.stringify(content) })
+            .update({ content: content })
             .eq('title', title);
 
         if (error) {
