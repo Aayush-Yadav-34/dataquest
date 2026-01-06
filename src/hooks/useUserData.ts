@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 
 interface UserData {
+    username: string;
+    email: string;
+    avatar_url?: string;
     xp: number;
     level: number;
     streak: number;
@@ -18,8 +21,8 @@ interface UseUserDataReturn {
 }
 
 /**
- * Hook to fetch fresh user XP data from the database
- * This should be used instead of session data for XP/level display
+ * Hook to fetch fresh user data from the database
+ * This should be used instead of session data for user display
  * as session data is only set at login time
  */
 export function useUserData(): UseUserDataReturn {
@@ -45,6 +48,9 @@ export function useUserData(): UseUserDataReturn {
 
             const data = await response.json();
             setUserData({
+                username: data.username,
+                email: data.email,
+                avatar_url: data.avatar_url,
                 xp: data.xp,
                 level: data.level,
                 streak: data.streak,

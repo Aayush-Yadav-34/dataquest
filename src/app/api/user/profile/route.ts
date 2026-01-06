@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
         const { data: user, error } = await supabase
             .from('users')
-            .select('id, email, name, avatar_url, role, xp, created_at')
+            .select('id, email, username, avatar_url, role, xp, level, streak, created_at')
             .eq('id', session.user.id)
             .single();
 
@@ -59,7 +59,7 @@ export async function PATCH(request: NextRequest) {
         const body = await request.json();
         const { name, avatar_url } = body;
 
-        // Build update object
+        // Build update object - database uses 'username' column
         const updates: Record<string, any> = {};
 
         if (name !== undefined) {
@@ -69,7 +69,8 @@ export async function PATCH(request: NextRequest) {
                     { status: 400 }
                 );
             }
-            updates.name = name;
+            // Update username column (database schema uses 'username', not 'name')
+            updates.username = name;
         }
 
         if (avatar_url !== undefined) {
@@ -87,7 +88,7 @@ export async function PATCH(request: NextRequest) {
             .from('users')
             .update(updates)
             .eq('id', session.user.id)
-            .select('id, email, name, avatar_url, role, xp, created_at')
+            .select('id, email, username, avatar_url, role, xp, level, streak, created_at')
             .single();
 
         if (error) {

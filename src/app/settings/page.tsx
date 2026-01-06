@@ -22,6 +22,7 @@ import {
     Check,
 } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
+import { useUserData } from '@/hooks/useUserData';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -29,12 +30,28 @@ export default function SettingsPage() {
     const router = useRouter();
     const { data: session, status } = useSession();
     const { profile, isAuthenticated: storeAuth } = useUserStore();
+    const { userData, refetch: refetchUserData } = useUserData();
 
     const isAuthenticated = status === 'authenticated' || storeAuth;
     const isLoading = status === 'loading';
 
-    // Get user info
-    const user = session?.user || profile;
+    // Get user info - prefer fresh data from useUserData
+    const user = userData ? {
+        username: userData.username,
+        email: userData.email,
+        name: userData.username,
+        avatar_url: userData.avatar_url,
+    } : session?.user ? {
+        username: session.user.username || session.user.name || '',
+        email: session.user.email || '',
+        name: session.user.name || '',
+        avatar_url: session.user.image,
+    } : profile ? {
+        username: profile.username,
+        email: profile.email,
+        name: profile.username,
+        avatar_url: profile.avatar,
+    } : null;
 
     // Form states
     const [username, setUsername] = useState('');
@@ -52,7 +69,7 @@ export default function SettingsPage() {
             setUsername(user.username || user.name || '');
             setEmail(user.email || '');
         }
-    }, [user]);
+    }, [user?.username, user?.email, user?.name]);
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
@@ -86,6 +103,8 @@ export default function SettingsPage() {
                 setSavedSection('profile');
                 setTimeout(() => setSavedSection(null), 2000);
                 toast.success('Profile updated successfully!');
+                // Refetch user data to update the UI with new username
+                await refetchUserData();
             } else {
                 const data = await response.json();
                 toast.error(data.error || 'Failed to update profile');
@@ -181,7 +200,7 @@ export default function SettingsPage() {
                                     {/* Avatar */}
                                     <div className="flex items-center gap-6">
                                         <Avatar className="w-20 h-20 border-2 border-primary/50">
-                                            <AvatarImage src={user.image || user.avatar} />
+                                            <AvatarImage src={user.avatar_url} />
                                             <AvatarFallback className="bg-gradient-primary text-white text-xl">
                                                 {(user.username || user.name || 'U').slice(0, 2).toUpperCase()}
                                             </AvatarFallback>

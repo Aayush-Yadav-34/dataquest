@@ -58,19 +58,19 @@ export function Navbar() {
     // Combined auth check - either NextAuth session or Zustand store
     const isAuthenticated = status === 'authenticated' || storeAuth;
 
-    // Get user info from session or store, with fresh XP data from useUserData
+    // Get user info from session or store, with fresh data from useUserData (database source of truth)
     const user = session?.user ? {
-        username: session.user.username || session.user.name || 'User',
-        email: session.user.email || '',
-        avatar: session.user.image,
+        username: userData?.username ?? session.user.username ?? session.user.name ?? 'User',
+        email: userData?.email ?? session.user.email ?? '',
+        avatar: userData?.avatar_url ?? session.user.image,
         role: session.user.role || 'user',
         xp: userData?.xp ?? session.user.xp ?? profile?.xp ?? 0,
         level: userData?.level ?? session.user.level ?? profile?.level ?? 1,
         streak: userData?.streak ?? session.user.streak ?? profile?.streak ?? 0,
     } : profile ? {
-        username: profile.username,
-        email: profile.email,
-        avatar: profile.avatar,
+        username: userData?.username ?? profile.username,
+        email: userData?.email ?? profile.email,
+        avatar: userData?.avatar_url ?? profile.avatar,
         role: profile.role,
         xp: userData?.xp ?? profile.xp,
         level: userData?.level ?? profile.level,

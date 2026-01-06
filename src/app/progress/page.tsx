@@ -26,6 +26,7 @@ import { useUserStore } from '@/store/userStore';
 import { useTopics } from '@/hooks/useTopics';
 import { useUserStats } from '@/hooks/useProgress';
 import { useUserData } from '@/hooks/useUserData';
+import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { cn } from '@/lib/utils';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -37,6 +38,10 @@ export default function ProgressPage() {
     const { topics, isLoading: topicsLoading } = useTopics();
     const { userData } = useUserData();
     const { skillsData, accuracyTrend, timeSpentData, summary, isLoading: statsLoading } = useUserStats();
+    const { currentUserRank, isLoading: leaderboardLoading } = useLeaderboard({ limit: 50 });
+
+    // Get global rank from leaderboard API
+    const globalRank = currentUserRank?.rank || 0;
 
     // Combined auth check
     const isAuthenticated = status === 'authenticated' || storeAuth;
@@ -128,11 +133,11 @@ export default function ProgressPage() {
                     />
                     <StatCard
                         title="Global Rank"
-                        value={`#${stats.rank}`}
-                        subtitle={`of ${stats.totalUsers.toLocaleString()} users`}
+                        value={globalRank > 0 ? `#${globalRank}` : '#-'}
+                        subtitle={globalRank > 0 ? 'Top performer' : 'Complete quizzes to rank'}
                         icon={Trophy}
                         variant="warning"
-                        trend={{ value: 3, positive: true }}
+                        trend={globalRank > 0 ? { value: 3, positive: true } : undefined}
                     />
                 </div>
 

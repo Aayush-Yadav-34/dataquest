@@ -21,6 +21,7 @@ interface UseLeaderboardOptions {
 
 export function useLeaderboard(options?: UseLeaderboardOptions) {
     const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
+    const [currentUserRank, setCurrentUserRank] = useState<LeaderboardUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +39,7 @@ export function useLeaderboard(options?: UseLeaderboardOptions) {
             if (response.ok) {
                 const data = await response.json();
                 setLeaderboard(data.leaderboard || []);
+                setCurrentUserRank(data.currentUserRank || null);
             } else {
                 throw new Error('Failed to fetch leaderboard');
             }
@@ -54,5 +56,11 @@ export function useLeaderboard(options?: UseLeaderboardOptions) {
         fetchLeaderboard();
     }, [fetchLeaderboard]);
 
-    return { leaderboard, isLoading, error, refetch: fetchLeaderboard };
+    return {
+        leaderboard,
+        currentUserRank,
+        isLoading,
+        error,
+        refetch: fetchLeaderboard
+    };
 }

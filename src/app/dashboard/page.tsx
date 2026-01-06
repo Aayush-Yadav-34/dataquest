@@ -30,6 +30,7 @@ import { useUserStore } from '@/store/userStore';
 import { useTopics } from '@/hooks/useTopics';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { useUserData } from '@/hooks/useUserData';
+import { useUserStats, useUserProgress } from '@/hooks/useProgress';
 import { toast } from 'sonner';
 
 export default function DashboardPage() {
@@ -39,8 +40,10 @@ export default function DashboardPage() {
 
     // Fetch data from APIs
     const { topics, isLoading: topicsLoading } = useTopics();
-    const { leaderboard, isLoading: leaderboardLoading } = useLeaderboard({ limit: 5 });
+    const { leaderboard, currentUserRank, isLoading: leaderboardLoading } = useLeaderboard({ limit: 10 });
     const { userData, isLoading: userDataLoading } = useUserData();
+    const { summary: progressStats, skillsData, isLoading: statsLoading } = useUserStats();
+    const { progress: userProgress } = useUserProgress();
 
     // Combined auth check
     const isAuthenticated = status === 'authenticated' || storeAuth;
@@ -77,13 +80,29 @@ export default function DashboardPage() {
         );
     }
 
-    // Get recent/in-progress topics from API data
-    const continueTopics = topics.filter((t) => (t.progress || 0) > 0 && (t.progress || 0) < 100).slice(0, 3);
-    const recommendedTopics = topics.filter((t) => !t.locked && (t.progress || 0) === 0).slice(0, 2);
+    // Get recent/in-progress topics from API data (topics with progress between 0-100)
+    // Also include topics that are in user_progress
+    const topicsWithProgress = topics.map(topic => {
+        const userTopicProgress = userProgress?.topics?.find(p => p.topic_id === topic.id);
+        return {
+            ...topic,
+            progress: userTopicProgress?.progress ?? topic.progress ?? 0,
+            completed: userTopicProgress?.completed ?? false,
+        };
+    });
+
+    const continueTopics = topicsWithProgress
+        .filter((t) => t.progress > 0 && t.progress < 100 && !t.completed)
+        .slice(0, 3);
+    const recommendedTopics = topicsWithProgress
+        .filter((t) => !t.locked && t.progress === 0 && !t.completed)
+        .slice(0, 2);
 
     // Top 5 leaderboard from API
     const topLeaders = leaderboard.slice(0, 5);
-    const currentUserRank = leaderboard.find((l) => l.isCurrentUser);
+    const totalUsers = leaderboard.length;
+    // Use currentUserRank from hook (works for admins too)
+    const userGlobalRank = currentUserRank?.rank || 0;
 
     if (!user) {
         return null;
@@ -160,31 +179,31 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <StatCard
                         title="Topics Completed"
-                        value={`${stats.topicsCompleted}/${stats.totalTopics}`}
-                        subtitle={`${Math.round((stats.topicsCompleted / stats.totalTopics) * 100)}% complete`}
+                        value={`${progressStats?.completedTopics || 0}/${progressStats?.totalTopics || topics.length}`}
+                        subtitle={`${progressStats?.totalTopics ? Math.round((progressStats.completedTopics / progressStats.totalTopics) * 100) : 0}% complete`}
                         icon={BookOpen}
                         variant="primary"
                     />
                     <StatCard
                         title="Quiz Accuracy"
-                        value={`${stats.quizAccuracy}%`}
-                        subtitle={`${stats.correctAnswers}/${stats.totalQuestions} correct`}
+                        value={`${progressStats?.averageAccuracy || 0}%`}
+                        subtitle={`${progressStats?.totalQuizzes || 0} quizzes completed`}
                         icon={Target}
                         variant="accent"
-                        trend={{ value: 5, positive: true }}
+                        trend={progressStats?.averageAccuracy ? { value: 5, positive: true } : undefined}
                     />
                     <StatCard
                         title="Global Rank"
-                        value={`#${stats.rank}`}
-                        subtitle={`Top ${Math.round((stats.rank / stats.totalUsers) * 100)}%`}
+                        value={userGlobalRank > 0 ? `#${userGlobalRank}` : '#-'}
+                        subtitle={userGlobalRank > 0 ? `Top performer` : 'Take a quiz to rank!'}
                         icon={Trophy}
                         variant="warning"
-                        trend={{ value: 3, positive: true }}
+                        trend={userGlobalRank > 0 ? { value: 3, positive: true } : undefined}
                     />
                     <StatCard
                         title="Time Spent"
-                        value={`${Math.floor(stats.timeSpent / 60)}h`}
-                        subtitle={`${stats.timeSpent % 60}m this week`}
+                        value={`${Math.floor(progressStats?.totalHours || 0)}h`}
+                        subtitle={`${Math.round(((progressStats?.totalHours || 0) % 1) * 60)}m estimated`}
                         icon={Clock}
                         variant="success"
                     />

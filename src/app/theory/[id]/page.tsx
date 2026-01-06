@@ -83,6 +83,26 @@ export default function TheoryTopicPage() {
         }
     }, [error, router]);
 
+    // Save partial progress whenever section changes (for Continue Learning feature)
+    useEffect(() => {
+        if (!topic?.id || sections.length === 0) return;
+
+        // Don't save at 0% (just opened) or 100% (completed - handled by handleComplete)
+        const currentProgress = Math.round(((currentSectionIndex + 1) / sections.length) * 100);
+        if (currentSectionIndex === 0 || currentProgress === 100) return;
+
+        // Save progress in background (don't await)
+        fetch('/api/user/progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                topicId: topic.id,
+                progressPercent: currentProgress,
+                completed: false,
+            }),
+        }).catch(err => console.error('Error saving progress:', err));
+    }, [topic?.id, currentSectionIndex, sections.length]);
+
     const handleComplete = async () => {
         if (!topic) return;
 

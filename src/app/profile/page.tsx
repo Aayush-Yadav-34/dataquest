@@ -1,32 +1,19 @@
 'use client';
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Navbar } from '@/components/layout/Navbar';
 import { XPProgressBar } from '@/components/shared/ProgressBar';
 import { BadgeGrid } from '@/components/shared/Badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     Calendar,
-    Edit,
+    Settings,
     Flame,
-    GraduationCap,
-    MapPin,
     Star,
     Trophy,
     Zap,
@@ -38,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
 import { useUserData } from '@/hooks/useUserData';
+import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -46,35 +34,32 @@ export default function ProfilePage() {
     const { data: session, status } = useSession();
     const { profile, stats, badges, activities, isAuthenticated: storeAuth } = useUserStore();
     const { userData, isLoading: userDataLoading } = useUserData();
+    const { currentUserRank, isLoading: leaderboardLoading } = useLeaderboard({ limit: 50 });
+
+    // Get user's global rank from leaderboard API
+    const globalRank = currentUserRank?.rank || stats.rank;
 
     // Combined auth check
     const isAuthenticated = status === 'authenticated' || storeAuth;
     const isLoading = status === 'loading';
 
-    // Get user info from session or store
+    // Get user info from session or store, with fresh data from useUserData (database source of truth)
     const user = session?.user ? {
-        username: session.user.username || session.user.name || 'User',
-        email: session.user.email || '',
-        avatar: session.user.image,
+        username: userData?.username ?? session.user.username ?? session.user.name ?? 'User',
+        email: userData?.email ?? session.user.email ?? '',
+        avatar: userData?.avatar_url ?? session.user.image,
         // Use fresh XP data from useUserData hook if available
         xp: userData?.xp ?? session.user.xp ?? 0,
         level: userData?.level ?? session.user.level ?? 1,
         streak: userData?.streak ?? session.user.streak ?? 0,
     } : profile ? {
-        username: profile.username,
-        email: profile.email,
-        avatar: profile.avatar,
+        username: userData?.username ?? profile.username,
+        email: userData?.email ?? profile.email,
+        avatar: userData?.avatar_url ?? profile.avatar,
         xp: userData?.xp ?? profile.xp,
         level: userData?.level ?? profile.level,
         streak: userData?.streak ?? profile.streak,
     } : null;
-
-    const [isEditing, setIsEditing] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-    const [editForm, setEditForm] = useState({
-        username: user?.username || '',
-        email: user?.email || '',
-    });
 
     // Show loading or redirect if not authenticated
     if (isLoading) {
@@ -90,13 +75,6 @@ export default function ProfilePage() {
         return null;
     }
 
-    const handleSave = async () => {
-        setIsSaving(true);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setIsSaving(false);
-        setIsEditing(false);
-        toast.success('Profile updated successfully!');
-    };
 
     const activityIcons = {
         theory: BookOpen,
@@ -144,57 +122,13 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
 
-                                {/* Edit Button */}
-                                <Dialog open={isEditing} onOpenChange={setIsEditing}>
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline" size="sm">
-                                            <Edit className="w-4 h-4 mr-2" />
-                                            Edit Profile
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-[425px]">
-                                        <DialogHeader>
-                                            <DialogTitle>Edit Profile</DialogTitle>
-                                            <DialogDescription>
-                                                Make changes to your profile here.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <div className="space-y-4 py-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="edit-username">Username</Label>
-                                                <Input
-                                                    id="edit-username"
-                                                    value={editForm.username}
-                                                    onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="edit-email">Email</Label>
-                                                <Input
-                                                    id="edit-email"
-                                                    type="email"
-                                                    value={editForm.email}
-                                                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                                />
-                                            </div>
-                                        </div>
-                                        <DialogFooter>
-                                            <Button variant="outline" onClick={() => setIsEditing(false)}>
-                                                Cancel
-                                            </Button>
-                                            <Button onClick={handleSave} disabled={isSaving}>
-                                                {isSaving ? (
-                                                    <>
-                                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                        Saving...
-                                                    </>
-                                                ) : (
-                                                    'Save Changes'
-                                                )}
-                                            </Button>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
+                                {/* Settings Button */}
+                                <Link href="/settings">
+                                    <Button variant="outline" size="sm">
+                                        <Settings className="w-4 h-4 mr-2" />
+                                        Settings
+                                    </Button>
+                                </Link>
                             </div>
 
                             {/* XP Progress */}
@@ -223,7 +157,7 @@ export default function ProfilePage() {
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-2 text-yellow-500 mb-1">
                                 <Trophy className="w-5 h-5" />
-                                <span className="text-2xl font-bold">#{stats.rank}</span>
+                                <span className="text-2xl font-bold">#{globalRank || '-'}</span>
                             </div>
                             <p className="text-sm text-muted-foreground">Global Rank</p>
                         </div>
