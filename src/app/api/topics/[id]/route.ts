@@ -65,7 +65,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         }
 
         const body = await request.json();
-        const { title, description, category, difficulty, icon, xp_reward, estimated_time, content, order_index } = body;
+        const { title, description, category, difficulty, icon, xp_reward, estimated_time, content, order_index, locked } = body;
 
         const updateData: Record<string, unknown> = {};
         if (title !== undefined) updateData.title = title;
@@ -77,6 +77,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         if (estimated_time !== undefined) updateData.estimated_time = estimated_time;
         if (content !== undefined) updateData.content = content;
         if (order_index !== undefined) updateData.order_index = order_index;
+        if (locked !== undefined) updateData.locked = locked;
 
         const { data: updatedTopic, error } = await supabase
             .from('topics')

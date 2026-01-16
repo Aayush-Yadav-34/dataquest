@@ -30,10 +30,11 @@ export default function SettingsPage() {
     const router = useRouter();
     const { data: session, status } = useSession();
     const { profile, isAuthenticated: storeAuth } = useUserStore();
-    const { userData, refetch: refetchUserData } = useUserData();
+    const { userData, refetch: refetchUserData, isLoading: userDataLoading } = useUserData();
 
     const isAuthenticated = status === 'authenticated' || storeAuth;
-    const isLoading = status === 'loading';
+    // Wait for both session AND userData to prevent flash of stale username
+    const isLoading = status === 'loading' || (isAuthenticated && userDataLoading);
 
     // Get user info - prefer fresh data from useUserData
     const user = userData ? {

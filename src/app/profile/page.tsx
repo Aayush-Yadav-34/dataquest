@@ -41,7 +41,8 @@ export default function ProfilePage() {
 
     // Combined auth check
     const isAuthenticated = status === 'authenticated' || storeAuth;
-    const isLoading = status === 'loading';
+    // Wait for both session AND userData to prevent flash of stale username
+    const isLoading = status === 'loading' || (isAuthenticated && userDataLoading);
 
     // Get user info from session or store, with fresh data from useUserData (database source of truth)
     const user = session?.user ? {

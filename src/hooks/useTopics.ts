@@ -43,11 +43,11 @@ export function useTopics(options?: UseTopicsOptions) {
 
             if (response.ok) {
                 const data = await response.json();
-                // Add frontend-specific fields
-                const enrichedTopics = data.topics.map((topic: Topic, index: number) => ({
+                // Add frontend-specific fields, preserve locked from database
+                const enrichedTopics = data.topics.map((topic: Topic) => ({
                     ...topic,
                     progress: 0, // Would come from user_progress table
-                    locked: index > 2, // Simple lock logic for demo
+                    locked: topic.locked ?? false, // Use database value with fallback
                 }));
                 setTopics(enrichedTopics);
             } else {
