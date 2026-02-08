@@ -329,10 +329,25 @@ export default function AdminPage() {
 
     const handleResetLeaderboard = async () => {
         setIsLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        setIsLoading(false);
-        setIsResetDialogOpen(false);
-        toast.success('Weekly leaderboard has been reset!');
+        try {
+            const response = await fetch('/api/admin/leaderboard/reset', {
+                method: 'POST',
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                toast.success(`Weekly leaderboard reset! Archived ${data.archived?.topUsers || 0} top users.`);
+            } else {
+                const data = await response.json();
+                toast.error(data.error || 'Failed to reset leaderboard');
+            }
+        } catch (error) {
+            console.error('Reset leaderboard error:', error);
+            toast.error('Failed to reset leaderboard');
+        } finally {
+            setIsLoading(false);
+            setIsResetDialogOpen(false);
+        }
     };
 
     // Edit Topic handler

@@ -7,6 +7,7 @@ export interface LeaderboardUser {
     username: string;
     avatar_url?: string;
     xp: number;
+    weekly_xp?: number;
     level: number;
     streak: number;
     rank: number;

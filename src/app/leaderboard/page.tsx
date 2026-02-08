@@ -32,7 +32,9 @@ interface ExtendedLeaderboardUser extends LeaderboardUser {
 
 export default function LeaderboardPage() {
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeTab, setActiveTab] = useState('global');
     const { leaderboard, isLoading } = useLeaderboard({ limit: 50 });
+    const { leaderboard: weeklyLeaderboardRaw } = useLeaderboard({ type: 'weekly', limit: 50 });
 
     // Map API data to extended format
     const leaderboardData: ExtendedLeaderboardUser[] = leaderboard.map((user, index) => ({
@@ -40,7 +42,17 @@ export default function LeaderboardPage() {
         avatar: user.avatar_url,
         userId: user.id,
         college: 'DataQuest University', // Default college for demo
-        change: Math.floor((Math.random() - 0.5) * 10), // Random change for demo
+        change: user.rankChange || 0,
+    }));
+
+    // Weekly leaderboard uses weekly_xp from API
+    const weeklyLeaderboard: ExtendedLeaderboardUser[] = weeklyLeaderboardRaw.map((user, index) => ({
+        ...user,
+        xp: user.weekly_xp || 0, // Use weekly_xp for display
+        avatar: user.avatar_url,
+        userId: user.id,
+        college: 'DataQuest University',
+        change: user.rankChange || 0,
     }));
 
     // Filter leaderboard by search
@@ -48,16 +60,6 @@ export default function LeaderboardPage() {
         entry.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
         entry.college?.toLowerCase().includes(searchQuery.toLowerCase())
     );
-
-    // Generate weekly leaderboard (shuffle and adjust XP slightly)
-    const weeklyLeaderboard = [...leaderboardData]
-        .map((entry) => ({
-            ...entry,
-            xp: Math.floor(entry.xp * (0.1 + Math.random() * 0.15)),
-            change: Math.floor((Math.random() - 0.5) * 10),
-        }))
-        .sort((a, b) => b.xp - a.xp)
-        .map((entry, i) => ({ ...entry, rank: i + 1 }));
 
     // Generate college leaderboard (group by college)
     const collegeStats = leaderboardData.reduce((acc, entry) => {

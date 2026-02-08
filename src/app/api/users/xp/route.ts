@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
         // Get current user data
         const { data: user, error: fetchError } = await supabase
             .from('users')
-            .select('id, xp, level, streak')
+            .select('id, xp, level, streak, weekly_xp')
             .eq('email', session.user.email)
             .single();
 
@@ -42,13 +42,15 @@ export async function POST(request: NextRequest) {
 
         // Calculate new XP and level
         const newXP = user.xp + amount;
+        const newWeeklyXP = (user.weekly_xp || 0) + amount;
         const newLevel = calculateLevel(newXP);
 
-        // Update user in database
+        // Update user in database (both total XP and weekly XP)
         const { error: updateError } = await supabase
             .from('users')
             .update({
                 xp: newXP,
+                weekly_xp: newWeeklyXP,
                 level: newLevel,
             })
             .eq('id', user.id);

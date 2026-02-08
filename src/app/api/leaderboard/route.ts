@@ -15,6 +15,7 @@ interface LeaderboardUser {
     username: string;
     avatar_url: string | null;
     xp: number;
+    weekly_xp: number;
     level: number;
     streak: number;
     role: string;
@@ -32,11 +33,12 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get('limit') || '100');
 
         // Get all non-admin users for leaderboard
+        const orderField = type === 'weekly' ? 'weekly_xp' : 'xp';
         const query = supabase
             .from('users')
-            .select('id, username, avatar_url, xp, level, streak, role')
+            .select('id, username, avatar_url, xp, weekly_xp, level, streak, role')
             .neq('role', 'admin') // Exclude admin users from leaderboard
-            .order('xp', { ascending: false })
+            .order(orderField, { ascending: false })
             .limit(limit);
 
         const { data: usersData, error } = await query;
@@ -90,7 +92,7 @@ export async function GET(request: NextRequest) {
         if (currentUserId) {
             const { data: currentUserData } = await supabase
                 .from('users')
-                .select('id, username, avatar_url, xp, level, streak, role')
+                .select('id, username, avatar_url, xp, weekly_xp, level, streak, role')
                 .eq('id', currentUserId)
                 .single();
 
