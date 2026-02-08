@@ -6,6 +6,24 @@ export async function POST(request: NextRequest) {
     try {
         const { username, email, password } = await request.json();
 
+        const supabase = createServiceRoleClient();
+
+        // Check if registration is allowed
+        const { data: settingsData } = await supabase
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'allow_registration')
+            .single();
+
+        const allowRegistration = settingsData?.value === 'true' || settingsData?.value === true;
+
+        if (settingsData && !allowRegistration) {
+            return NextResponse.json(
+                { error: 'New registrations are currently disabled' },
+                { status: 403 }
+            );
+        }
+
         // Validate input
         if (!username || !email || !password) {
             return NextResponse.json(
@@ -20,8 +38,6 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
-
-        const supabase = createServiceRoleClient();
 
         // Check if email already exists
         const { data: existingEmail } = await supabase

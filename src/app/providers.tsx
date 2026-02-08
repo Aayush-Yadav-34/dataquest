@@ -2,6 +2,8 @@
 
 import { SessionProvider } from 'next-auth/react';
 import { ReactNode } from 'react';
+import { MaintenanceCheck } from '@/components/auth/MaintenanceCheck';
+import { SessionTracker } from '@/components/auth/SessionTracker';
 
 interface ProvidersProps {
     children: ReactNode;
@@ -10,7 +12,11 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
     return (
         <SessionProvider>
-            {children}
+            <MaintenanceCheck>
+                <SessionTracker>
+                    {children}
+                </SessionTracker>
+            </MaintenanceCheck>
         </SessionProvider>
     );
 }

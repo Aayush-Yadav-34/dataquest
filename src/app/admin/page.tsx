@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     Dialog,
@@ -95,6 +96,26 @@ export default function AdminPage() {
     const [userSearch, setUserSearch] = useState('');
     const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
 
+    // Settings state
+    interface AppSettings {
+        maintenance_mode: boolean;
+        allow_registration: boolean;
+        session_time_tracking: boolean;
+        auto_weekly_reset: boolean;
+        weekly_reset_day: string;
+        email_notifications: boolean;
+    }
+    const [settings, setSettings] = useState<AppSettings>({
+        maintenance_mode: false,
+        allow_registration: true,
+        session_time_tracking: true,
+        auto_weekly_reset: false,
+        weekly_reset_day: 'monday',
+        email_notifications: false,
+    });
+    const [settingsLoading, setSettingsLoading] = useState(false);
+    const [settingsSaving, setSettingsSaving] = useState(false);
+
     // Fetch data from API
     const { topics: adminTopicsRaw, isLoading: topicsLoading, refetch: refetchTopics } = useAdminTopics();
     const { quizzes, isLoading: quizzesLoading, refetch: refetchQuizzes } = useQuizzes();
@@ -139,6 +160,58 @@ export default function AdminPage() {
         };
         fetchUsers();
     }, []);
+
+    // Fetch settings on component mount
+    useEffect(() => {
+        const fetchSettings = async () => {
+            setSettingsLoading(true);
+            try {
+                const response = await fetch('/api/admin/settings');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.settings) {
+                        setSettings({
+                            maintenance_mode: data.settings.maintenance_mode === true || data.settings.maintenance_mode === 'true',
+                            allow_registration: data.settings.allow_registration !== false && data.settings.allow_registration !== 'false',
+                            session_time_tracking: data.settings.session_time_tracking !== false && data.settings.session_time_tracking !== 'false',
+                            auto_weekly_reset: data.settings.auto_weekly_reset === true || data.settings.auto_weekly_reset === 'true',
+                            weekly_reset_day: data.settings.weekly_reset_day?.replace(/"/g, '') || 'monday',
+                            email_notifications: data.settings.email_notifications === true || data.settings.email_notifications === 'true',
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching settings:', error);
+            } finally {
+                setSettingsLoading(false);
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    // Save settings handler
+    const handleSaveSettings = async () => {
+        setSettingsSaving(true);
+        try {
+            const response = await fetch('/api/admin/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ settings }),
+            });
+
+            if (response.ok) {
+                toast.success('Settings saved successfully!');
+            } else {
+                const data = await response.json();
+                toast.error(data.error || 'Failed to save settings');
+            }
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            toast.error('Failed to save settings');
+        } finally {
+            setSettingsSaving(false);
+        }
+    };
 
     const [newTopic, setNewTopic] = useState({
         title: '',
@@ -1138,46 +1211,98 @@ export default function AdminPage() {
                         <TabsContent value="settings">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Platform Settings</CardTitle>
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle>System Settings</CardTitle>
+                                        {settingsLoading && (
+                                            <span className="text-sm text-muted-foreground">Loading...</span>
+                                        )}
+                                    </div>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div className="space-y-4">
-                                            <h3 className="font-semibold">XP Configuration</h3>
-                                            <div className="space-y-2">
-                                                <Label>Topic Completion XP (Base)</Label>
-                                                <Input type="number" defaultValue={100} />
+                                            <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card/50">
+                                                <div>
+                                                    <h4 className="font-medium">Maintenance Mode</h4>
+                                                    <p className="text-sm text-muted-foreground">Temporarily disable access for maintenance</p>
+                                                </div>
+                                                <Switch
+                                                    checked={settings.maintenance_mode}
+                                                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, maintenance_mode: checked }))}
+                                                />
                                             </div>
-                                            <div className="space-y-2">
-                                                <Label>Quiz Completion XP (Base)</Label>
-                                                <Input type="number" defaultValue={50} />
+                                            <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card/50">
+                                                <div>
+                                                    <h4 className="font-medium">Allow New Registrations</h4>
+                                                    <p className="text-sm text-muted-foreground">Enable or disable new user sign-ups</p>
+                                                </div>
+                                                <Switch
+                                                    checked={settings.allow_registration}
+                                                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, allow_registration: checked }))}
+                                                />
                                             </div>
-                                            <div className="space-y-2">
-                                                <Label>Daily Streak Bonus XP</Label>
-                                                <Input type="number" defaultValue={25} />
+                                            <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card/50">
+                                                <div>
+                                                    <h4 className="font-medium">Session Time Tracking</h4>
+                                                    <p className="text-sm text-muted-foreground">Track time users spend on the platform</p>
+                                                </div>
+                                                <Switch
+                                                    checked={settings.session_time_tracking}
+                                                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, session_time_tracking: checked }))}
+                                                />
                                             </div>
                                         </div>
-
                                         <div className="space-y-4">
-                                            <h3 className="font-semibold">Quiz Settings</h3>
-                                            <div className="space-y-2">
-                                                <Label>Default Time Limit (seconds)</Label>
-                                                <Input type="number" defaultValue={300} />
+                                            <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card/50">
+                                                <div>
+                                                    <h4 className="font-medium">Auto Weekly Reset</h4>
+                                                    <p className="text-sm text-muted-foreground">Automatically reset weekly leaderboard</p>
+                                                </div>
+                                                <Switch
+                                                    checked={settings.auto_weekly_reset}
+                                                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, auto_weekly_reset: checked }))}
+                                                />
                                             </div>
-                                            <div className="space-y-2">
-                                                <Label>Default Passing Score (%)</Label>
-                                                <Input type="number" defaultValue={70} />
+                                            <div className="space-y-2 p-4 rounded-lg border border-border/50 bg-card/50">
+                                                <Label htmlFor="reset-day">Weekly Reset Day</Label>
+                                                <select
+                                                    id="reset-day"
+                                                    className="w-full p-2 rounded-md border border-input bg-background"
+                                                    value={settings.weekly_reset_day}
+                                                    onChange={(e) => setSettings(prev => ({ ...prev, weekly_reset_day: e.target.value }))}
+                                                >
+                                                    <option value="sunday">Sunday</option>
+                                                    <option value="monday">Monday</option>
+                                                    <option value="saturday">Saturday</option>
+                                                </select>
                                             </div>
-                                            <div className="space-y-2">
-                                                <Label>Questions per Quiz (Default)</Label>
-                                                <Input type="number" defaultValue={10} />
+                                            <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card/50">
+                                                <div>
+                                                    <h4 className="font-medium">Email Notifications</h4>
+                                                    <p className="text-sm text-muted-foreground">Send weekly summary emails</p>
+                                                </div>
+                                                <Switch
+                                                    checked={settings.email_notifications}
+                                                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, email_notifications: checked }))}
+                                                />
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="flex justify-end pt-4 border-t border-border/50">
-                                        <Button className="bg-gradient-primary" onClick={() => toast.success('Settings saved!')}>
-                                            Save Settings
+                                        <Button
+                                            className="bg-gradient-primary"
+                                            onClick={handleSaveSettings}
+                                            disabled={settingsSaving}
+                                        >
+                                            {settingsSaving ? (
+                                                <>
+                                                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                                    Saving...
+                                                </>
+                                            ) : (
+                                                'Save Settings'
+                                            )}
                                         </Button>
                                     </div>
                                 </CardContent>
