@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Zap, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Zap, Mail, Lock, ArrowRight, Loader2, ShieldX } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserStore } from '@/store/userStore';
 
@@ -21,6 +22,7 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showBlockedModal, setShowBlockedModal] = useState(false);
 
     // Combined auth check
     const isAuthenticated = status === 'authenticated' || storeAuth;
@@ -49,6 +51,10 @@ export default function LoginPage() {
                 description: 'Successfully logged in to DataQuest.',
             });
             router.push('/dashboard');
+        } else if (result?.error === 'AccessDenied') {
+            // User is blocked - show modal
+            setShowBlockedModal(true);
+            setIsSubmitting(false);
         } else {
             setError(result?.error || 'Invalid email or password');
             setIsSubmitting(false);
@@ -248,6 +254,36 @@ export default function LoginPage() {
                     </div>
                 </motion.div>
             </div>
+
+            {/* Blocked User Modal */}
+            <Dialog open={showBlockedModal} onOpenChange={setShowBlockedModal}>
+                <DialogContent className="sm:max-w-md text-center">
+                    <DialogHeader className="flex flex-col items-center">
+                        <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                            <ShieldX className="w-8 h-8 text-destructive" />
+                        </div>
+                        <DialogTitle className="text-xl">Account Blocked</DialogTitle>
+                        <DialogDescription className="mt-3 text-center">
+                            Your account has been blocked by an administrator.
+                            You are currently unable to access DataQuest.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <div className="p-4 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+                            <p className="font-medium text-foreground mb-1">Need help?</p>
+                            <p>Please contact the administrator for further queries regarding your account status.</p>
+                            <p className="mt-2 text-primary">admin@dataquest.com</p>
+                        </div>
+                    </div>
+                    <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setShowBlockedModal(false)}
+                    >
+                        Close
+                    </Button>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

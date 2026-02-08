@@ -55,9 +55,9 @@ export const authOptions: NextAuthOptions = {
     ],
     callbacks: {
         async signIn({ user, account }) {
-            if (account?.provider === 'google') {
-                const supabase = createServiceRoleClient();
+            const supabase = createServiceRoleClient();
 
+            if (account?.provider === 'google') {
                 // Check if user exists
                 const { data: existingUser } = await supabase
                     .from('users')
@@ -82,6 +82,29 @@ export const authOptions: NextAuthOptions = {
                     }
                 }
             }
+
+            // Check if user is blocked
+            if (user.email) {
+                const { data: userData } = await supabase
+                    .from('users')
+                    .select('blocked')
+                    .eq('email', user.email)
+                    .single();
+
+                if (userData?.blocked) {
+                    console.log('Blocked user attempted login:', user.email);
+                    return false; // Deny login for blocked users
+                }
+            }
+
+            // Update last_active for all users on every login
+            if (user.email) {
+                await supabase
+                    .from('users')
+                    .update({ last_active: new Date().toISOString() })
+                    .eq('email', user.email);
+            }
+
             return true;
         },
         async jwt({ token, user }) {

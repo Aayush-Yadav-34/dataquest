@@ -53,6 +53,8 @@ import {
     Brain,
     Shield,
     Lock,
+    Ban,
+    UserCheck,
 } from 'lucide-react';
 import { useAdminTopics, AdminTopic } from '@/hooks/useAdminTopics';
 import { useQuizzes } from '@/hooks/useQuizzes';
@@ -71,6 +73,27 @@ export default function AdminPage() {
     const [isAddQuizOpen, setIsAddQuizOpen] = useState(false);
     const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [adminStats, setAdminStats] = useState({
+        totalUsers: 0,
+        activeToday: 0,
+        topUser: 'Loading...',
+        highestXP: 0,
+        competitorCount: 0
+    });
+    const [usersList, setUsersList] = useState<Array<{
+        id: string;
+        email: string;
+        username: string;
+        avatar_url: string | null;
+        xp: number;
+        level: number;
+        role: string;
+        blocked: boolean;
+        created_at: string;
+    }>>([]);
+    const [usersLoading, setUsersLoading] = useState(false);
+    const [userSearch, setUserSearch] = useState('');
+    const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
 
     // Fetch data from API
     const { topics: adminTopicsRaw, isLoading: topicsLoading, refetch: refetchTopics } = useAdminTopics();
@@ -81,6 +104,41 @@ export default function AdminPage() {
         ...t,
         status: t.locked ? 'draft' as const : 'published' as const,
     }));
+
+    // Fetch admin stats from API
+    useEffect(() => {
+        const fetchAdminStats = async () => {
+            try {
+                const response = await fetch('/api/admin/stats');
+                if (response.ok) {
+                    const data = await response.json();
+                    setAdminStats(data);
+                }
+            } catch (error) {
+                console.error('Error fetching admin stats:', error);
+            }
+        };
+        fetchAdminStats();
+    }, []);
+
+    // Fetch users list on component mount
+    useEffect(() => {
+        const fetchUsers = async () => {
+            setUsersLoading(true);
+            try {
+                const response = await fetch('/api/admin/users');
+                if (response.ok) {
+                    const data = await response.json();
+                    setUsersList(data.users);
+                }
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            } finally {
+                setUsersLoading(false);
+            }
+        };
+        fetchUsers();
+    }, []);
 
     const [newTopic, setNewTopic] = useState({
         title: '',
@@ -526,8 +584,8 @@ export default function AdminPage() {
         totalTopics: adminTopics.length,
         publishedTopics: adminTopics.filter((t) => t.status === 'published').length,
         totalQuizzes: quizzes.length,
-        totalUsers: 1250,
-        activeToday: 342,
+        totalUsers: adminStats.totalUsers,
+        activeToday: adminStats.activeToday,
     };
 
     return (
@@ -634,6 +692,10 @@ export default function AdminPage() {
                             <TabsTrigger value="settings">
                                 <Settings className="w-4 h-4 mr-2" />
                                 Settings
+                            </TabsTrigger>
+                            <TabsTrigger value="users">
+                                <Users className="w-4 h-4 mr-2" />
+                                Users
                             </TabsTrigger>
                         </TabsList>
 
@@ -1039,17 +1101,17 @@ export default function AdminPage() {
                                     <div className="grid md:grid-cols-3 gap-4">
                                         <div className="glass-card p-4 text-center">
                                             <Trophy className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                                            <p className="text-2xl font-bold">MLMaster</p>
+                                            <p className="text-2xl font-bold">{adminStats.topUser}</p>
                                             <p className="text-sm text-muted-foreground">Current #1</p>
                                         </div>
                                         <div className="glass-card p-4 text-center">
                                             <Users className="w-8 h-8 text-primary mx-auto mb-2" />
-                                            <p className="text-2xl font-bold">1,250</p>
+                                            <p className="text-2xl font-bold">{adminStats.competitorCount.toLocaleString()}</p>
                                             <p className="text-sm text-muted-foreground">Active Competitors</p>
                                         </div>
                                         <div className="glass-card p-4 text-center">
                                             <BarChart3 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                                            <p className="text-2xl font-bold">15,420</p>
+                                            <p className="text-2xl font-bold">{adminStats.highestXP.toLocaleString()}</p>
                                             <p className="text-sm text-muted-foreground">Highest XP</p>
                                         </div>
                                     </div>
@@ -1103,6 +1165,141 @@ export default function AdminPage() {
                                             Save Settings
                                         </Button>
                                     </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        {/* Users Tab */}
+                        <TabsContent value="users">
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle>User Management</CardTitle>
+                                        <div className="flex items-center gap-2">
+                                            <div className="relative">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                                <Input
+                                                    placeholder="Search users..."
+                                                    className="pl-9 w-64"
+                                                    value={userSearch}
+                                                    onChange={(e) => setUserSearch(e.target.value)}
+                                                />
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                onClick={async () => {
+                                                    setUsersLoading(true);
+                                                    try {
+                                                        const res = await fetch(`/api/admin/users?search=${userSearch}`);
+                                                        if (res.ok) {
+                                                            const data = await res.json();
+                                                            setUsersList(data.users);
+                                                        }
+                                                    } catch (e) {
+                                                        console.error(e);
+                                                    } finally {
+                                                        setUsersLoading(false);
+                                                    }
+                                                }}
+                                            >
+                                                <RefreshCw className={cn("w-4 h-4", usersLoading && "animate-spin")} />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    {usersList.length === 0 ? (
+                                        <div className="text-center py-8">
+                                            <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                                            <p className="text-muted-foreground">No users found. Click refresh to load users.</p>
+                                        </div>
+                                    ) : (
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>User</TableHead>
+                                                    <TableHead>Role</TableHead>
+                                                    <TableHead>XP</TableHead>
+                                                    <TableHead>Level</TableHead>
+                                                    <TableHead>Status</TableHead>
+                                                    <TableHead className="text-right">Actions</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {usersList.map((user) => (
+                                                    <TableRow key={user.id}>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium">
+                                                                    {user.username?.charAt(0).toUpperCase() || '?'}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-medium">{user.username}</p>
+                                                                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                                                                {user.role}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell>{user.xp.toLocaleString()}</TableCell>
+                                                        <TableCell>{user.level}</TableCell>
+                                                        <TableCell>
+                                                            {user.blocked ? (
+                                                                <Badge variant="destructive">Blocked</Badge>
+                                                            ) : (
+                                                                <Badge variant="outline" className="text-emerald-500 border-emerald-500">Active</Badge>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            {user.role !== 'admin' && (
+                                                                <div className="flex justify-end gap-2">
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={async () => {
+                                                                            try {
+                                                                                const res = await fetch('/api/admin/users', {
+                                                                                    method: 'PATCH',
+                                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                                    body: JSON.stringify({ userId: user.id, blocked: !user.blocked })
+                                                                                });
+                                                                                if (res.ok) {
+                                                                                    toast.success(user.blocked ? 'User unblocked' : 'User blocked');
+                                                                                    setUsersList(prev => prev.map(u =>
+                                                                                        u.id === user.id ? { ...u, blocked: !u.blocked } : u
+                                                                                    ));
+                                                                                }
+                                                                            } catch (e) {
+                                                                                console.error(e);
+                                                                                toast.error('Failed to update user');
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        {user.blocked ? (
+                                                                            <><UserCheck className="w-4 h-4 mr-1" /> Unblock</>
+                                                                        ) : (
+                                                                            <><Ban className="w-4 h-4 mr-1" /> Block</>
+                                                                        )}
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="destructive"
+                                                                        size="sm"
+                                                                        onClick={() => setDeleteUserId(user.id)}
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </Button>
+                                                                </div>
+                                                            )}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    )}
                                 </CardContent>
                             </Card>
                         </TabsContent>
@@ -1401,6 +1598,52 @@ export default function AdminPage() {
                             setEditingQuestion(null);
                         }}>
                             Close
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete User Confirmation Dialog */}
+            <Dialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete User</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this user? This action cannot be undone.
+                            All their data including progress, quiz attempts, and badges will be permanently removed.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive">
+                        <AlertTriangle className="w-5 h-5" />
+                        <p className="text-sm">This action is irreversible!</p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteUserId(null)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={async () => {
+                                if (!deleteUserId) return;
+                                try {
+                                    const res = await fetch(`/api/admin/users?userId=${deleteUserId}`, {
+                                        method: 'DELETE'
+                                    });
+                                    if (res.ok) {
+                                        toast.success('User deleted successfully');
+                                        setUsersList(prev => prev.filter(u => u.id !== deleteUserId));
+                                        setDeleteUserId(null);
+                                    } else {
+                                        const data = await res.json();
+                                        toast.error(data.error || 'Failed to delete user');
+                                    }
+                                } catch (e) {
+                                    console.error(e);
+                                    toast.error('Failed to delete user');
+                                }
+                            }}
+                        >
+                            Delete User
                         </Button>
                     </DialogFooter>
                 </DialogContent>

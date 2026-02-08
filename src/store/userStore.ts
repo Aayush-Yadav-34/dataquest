@@ -118,81 +118,18 @@ export const useUserStore = create<UserState>()(
       // Set loading
       setLoading: (value) => set({ isLoading: value }),
 
-      // Login with email/password (uses mock for now, can connect to API)
-      login: async (email: string, password: string) => {
-        set({ isLoading: true });
-
-        try {
-          // Mock users for demo purposes
-          const mockUsers = [
-            {
-              id: 'admin-1',
-              email: 'admin@dataquest.com',
-              password: 'admin123',
-              username: 'Admin',
-              role: 'admin' as const,
-              xp: 5000,
-              level: 8,
-              streak: 30,
-            },
-            {
-              id: 'user-1',
-              email: 'user@example.com',
-              password: 'user123',
-              username: 'DataWizard',
-              role: 'user' as const,
-              xp: 1250,
-              level: 5,
-              streak: 7,
-            },
-          ];
-
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 500));
-
-          const user = mockUsers.find(u => u.email === email && u.password === password);
-
-          if (user) {
-            const profile: UserProfile = {
-              id: user.id,
-              email: user.email,
-              username: user.username,
-              avatar: undefined,
-              xp: user.xp,
-              level: user.level,
-              streak: user.streak,
-              role: user.role,
-              joinedDate: new Date().toISOString(),
-            };
-
-            set({
-              profile,
-              isAuthenticated: true,
-              isLoading: false,
-              stats: {
-                ...defaultStats,
-                topicsCompleted: user.role === 'admin' ? 8 : 3,
-                quizAccuracy: user.role === 'admin' ? 92 : 78,
-                correctAnswers: user.role === 'admin' ? 45 : 15,
-                totalQuestions: user.role === 'admin' ? 49 : 19,
-                rank: user.role === 'admin' ? 5 : 42,
-              },
-              badges: defaultBadges.map((b, i) => ({
-                ...b,
-                locked: i > (user.role === 'admin' ? 4 : 2),
-                earnedDate: i <= (user.role === 'admin' ? 4 : 2) ? new Date().toISOString() : undefined,
-              })),
-            });
-
-            return { success: true };
-          }
-
-          set({ isLoading: false });
-          return { success: false, error: 'Invalid email or password' };
-        } catch (error) {
-          set({ isLoading: false });
-          return { success: false, error: 'Login failed. Please try again.' };
-        }
+      // Login with email/password - use NextAuth signIn('credentials') instead
+      // This method is deprecated and kept for backwards compatibility
+      // The login page already uses NextAuth directly
+      login: async (_email: string, _password: string) => {
+        console.warn(
+          'userStore.login() is deprecated. Use NextAuth signIn("credentials") instead.'
+        );
+        // Return failure - actual login should go through NextAuth
+        return {
+          success: false,
+          error: 'Please use the login page with NextAuth authentication.'
+        };
       },
 
       // Logout

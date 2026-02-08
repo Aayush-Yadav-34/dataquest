@@ -3,6 +3,23 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
+// Type for leaderboard history entry
+interface LeaderboardHistoryEntry {
+    user_id: string;
+    rank: number;
+}
+
+// Type for user from database
+interface LeaderboardUser {
+    id: string;
+    username: string;
+    avatar_url: string | null;
+    xp: number;
+    level: number;
+    streak: number;
+    role: string;
+}
+
 // GET /api/leaderboard - Get leaderboard data
 export async function GET(request: NextRequest) {
     try {
@@ -15,14 +32,15 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get('limit') || '100');
 
         // Get all non-admin users for leaderboard
-        let query = supabase
+        const query = supabase
             .from('users')
             .select('id, username, avatar_url, xp, level, streak, role')
             .neq('role', 'admin') // Exclude admin users from leaderboard
             .order('xp', { ascending: false })
             .limit(limit);
 
-        const { data: users, error } = await query;
+        const { data: usersData, error } = await query;
+        const users = usersData as LeaderboardUser[] | null;
 
         if (error) {
             return NextResponse.json(
@@ -31,22 +49,52 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Add rank to each user and mark current user
-        const leaderboard = users?.map((user, index) => ({
-            ...user,
-            rank: index + 1,
-            rankChange: Math.floor(Math.random() * 5) - 2, // Mock rank change for now
-            isCurrentUser: user.id === currentUserId,
-        }));
+        // Get yesterday's date for rank history lookup
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        // Fetch yesterday's rank history
+        const { data: historyRaw } = await supabase
+            .from('leaderboard_history')
+            .select('user_id, rank')
+            .eq('recorded_at', yesterdayStr);
+
+        const historyData = historyRaw as LeaderboardHistoryEntry[] | null;
+
+        // Create a map of user_id to previous rank
+        const previousRanks = new Map<string, number>();
+        historyData?.forEach(entry => {
+            previousRanks.set(entry.user_id, entry.rank);
+        });
+
+        // Add rank to each user and calculate rank change
+        const leaderboard = users?.map((user, index) => {
+            const currentRank = index + 1;
+            const previousRank = previousRanks.get(user.id);
+            // rankChange: positive = moved up, negative = moved down
+            const rankChange = previousRank !== undefined
+                ? previousRank - currentRank
+                : 0; // New users have no change
+
+            return {
+                ...user,
+                rank: currentRank,
+                rankChange,
+                isCurrentUser: user.id === currentUserId,
+            };
+        });
 
         // Find current user's rank even if they're admin (query separately)
         let currentUserRank = null;
         if (currentUserId) {
-            const { data: currentUser } = await supabase
+            const { data: currentUserData } = await supabase
                 .from('users')
                 .select('id, username, avatar_url, xp, level, streak, role')
                 .eq('id', currentUserId)
                 .single();
+
+            const currentUser = currentUserData as LeaderboardUser | null;
 
             if (currentUser) {
                 // Count how many users have more XP than the current user
