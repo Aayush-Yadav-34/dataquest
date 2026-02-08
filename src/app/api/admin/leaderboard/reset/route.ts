@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { resetWeeklyLeaderboard } from '@/lib/reset';
 
 // POST /api/admin/leaderboard/reset - Reset weekly leaderboard
 export async function POST() {
@@ -31,20 +30,51 @@ export async function POST() {
             );
         }
 
-        const result = await resetWeeklyLeaderboard();
+        // Get top 10 users before reset for archiving
+        const { data: topUsers } = await supabase
+            .from('users')
+            .select('id, username, weekly_xp')
+            .neq('role', 'admin')
+            .order('weekly_xp', { ascending: false })
+            .limit(10);
 
-        if (result.success) {
-            return NextResponse.json({
-                success: true,
-                message: 'Weekly leaderboard reset successfully',
-                archived: result.archived
-            });
-        } else {
+        // Count total participants (users with weekly_xp > 0)
+        const { count: totalParticipants } = await supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true })
+            .gt('weekly_xp', 0);
+
+        // Archive the weekly results
+        await supabase.from('weekly_reset_history').insert({
+            top_users: topUsers || [],
+            total_participants: totalParticipants || 0,
+        });
+
+        // Reset all users' weekly_xp to 0
+        const { error: resetError } = await supabase
+            .from('users')
+            .update({
+                weekly_xp: 0,
+                last_weekly_reset: new Date().toISOString()
+            })
+            .neq('id', '00000000-0000-0000-0000-000000000000'); // Update all users
+
+        if (resetError) {
+            console.error('Reset error:', resetError);
             return NextResponse.json(
-                { error: result.error || 'Failed to reset weekly leaderboard' },
+                { error: 'Failed to reset weekly leaderboard' },
                 { status: 500 }
             );
         }
+
+        return NextResponse.json({
+            success: true,
+            message: 'Weekly leaderboard reset successfully',
+            archived: {
+                topUsers: topUsers?.length || 0,
+                totalParticipants: totalParticipants || 0,
+            }
+        });
     } catch (error) {
         console.error('Weekly reset error:', error);
         return NextResponse.json(

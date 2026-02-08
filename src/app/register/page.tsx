@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Card } from '@/components/ui/card';
 import { Zap, Mail, Lock, User, ArrowRight, Loader2, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserStore } from '@/store/userStore';
@@ -24,8 +23,6 @@ export default function RegisterPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [registrationAllowed, setRegistrationAllowed] = useState(true);
-    const [checkingSettings, setCheckingSettings] = useState(true);
 
     // Redirect if already authenticated
     useEffect(() => {
@@ -33,26 +30,6 @@ export default function RegisterPage() {
             router.push('/dashboard');
         }
     }, [isAuthenticated, router]);
-
-    // Check registration setting
-    useEffect(() => {
-        const checkSettings = async () => {
-            try {
-                const res = await fetch('/api/settings/public');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.settings && typeof data.settings.allow_registration !== 'undefined') {
-                        setRegistrationAllowed(data.settings.allow_registration === true || data.settings.allow_registration === 'true');
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to check settings:', error);
-            } finally {
-                setCheckingSettings(false);
-            }
-        };
-        checkSettings();
-    }, []);
 
     // Password requirements
     const passwordRequirements = [
@@ -115,35 +92,6 @@ export default function RegisterPage() {
             setIsSubmitting(false);
         }
     };
-
-    if (checkingSettings) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-
-    if (!registrationAllowed) {
-        return (
-            <div className="min-h-screen flex items-center justify-center p-4">
-                <Card className="max-w-md w-full p-8 text-center space-y-6">
-                    <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                        <Lock className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold">Registration Closed</h1>
-                        <p className="text-muted-foreground mt-2">
-                            New user registrations are currently disabled. Please check back later or contact an administrator.
-                        </p>
-                    </div>
-                    <Button asChild className="w-full">
-                        <Link href="/login">Return to Login</Link>
-                    </Button>
-                </Card>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen flex">
