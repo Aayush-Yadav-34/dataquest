@@ -38,6 +38,9 @@ function MaintenanceWrapper({ children }: { children: ReactNode }) {
                         const userData = await userRes.json();
                         setIsAdmin(userData.user?.role === 'admin');
                     }
+
+                    // Update streak on first load of the day
+                    fetch('/api/user/streak', { method: 'POST' }).catch(() => { });
                 }
             } catch (error) {
                 console.error('Error checking maintenance status:', error);
