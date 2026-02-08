@@ -24,6 +24,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
+        const userId = (userData as { id: string }).id;
+
         // Check if session tracking is enabled
         const { data: settingsData } = await supabase
             .from('app_settings')
@@ -31,7 +33,7 @@ export async function POST(request: NextRequest) {
             .eq('key', 'session_time_tracking')
             .single();
 
-        if (settingsData?.value !== 'true') {
+        if ((settingsData as { value: string } | null)?.value !== 'true') {
             return NextResponse.json({ message: 'Session tracking disabled' });
         }
 
@@ -41,11 +43,11 @@ export async function POST(request: NextRequest) {
         if (action === 'start') {
             // Start a new session
             const { data: newSession, error } = await supabase
-                .from('session_logs')
+                .from('session_logs' as any)
                 .insert({
-                    user_id: userData.id,
+                    user_id: userId,
                     session_start: new Date().toISOString(),
-                })
+                } as any)
                 .select('id')
                 .single();
 
@@ -57,45 +59,45 @@ export async function POST(request: NextRequest) {
             // Update last_active
             await supabase
                 .from('users')
-                .update({ last_active: new Date().toISOString() })
-                .eq('id', userData.id);
+                .update({ last_active: new Date().toISOString() } as any)
+                .eq('id', userId);
 
-            return NextResponse.json({ sessionId: newSession.id });
+            return NextResponse.json({ sessionId: (newSession as any)?.id });
 
         } else if (action === 'heartbeat' && sessionId) {
             // Update last_active timestamp
             await supabase
                 .from('users')
-                .update({ last_active: new Date().toISOString() })
-                .eq('id', userData.id);
+                .update({ last_active: new Date().toISOString() } as any)
+                .eq('id', userId);
 
             return NextResponse.json({ success: true });
 
         } else if (action === 'end' && sessionId) {
             // End session and calculate duration
             const { data: sessionData } = await supabase
-                .from('session_logs')
+                .from('session_logs' as any)
                 .select('session_start')
                 .eq('id', sessionId)
                 .single();
 
             if (sessionData) {
-                const startTime = new Date(sessionData.session_start);
+                const startTime = new Date((sessionData as any).session_start);
                 const endTime = new Date();
                 const durationSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
 
                 // Update session log
                 await supabase
-                    .from('session_logs')
+                    .from('session_logs' as any)
                     .update({
                         session_end: endTime.toISOString(),
                         duration_seconds: durationSeconds,
-                    })
+                    } as any)
                     .eq('id', sessionId);
 
                 // Update user's total time spent
-                await supabase.rpc('increment_time_spent', {
-                    user_id_param: userData.id,
+                await (supabase.rpc as any)('increment_time_spent', {
+                    user_id_param: userId,
                     seconds_param: durationSeconds,
                 });
             }
