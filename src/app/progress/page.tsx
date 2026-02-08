@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
@@ -74,6 +74,13 @@ export default function ProgressPage() {
         { day: 'Sun', minutes: 45, xp: 100 },
     ];
 
+    // Redirect if not authenticated (in useEffect to avoid render-time state updates)
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated) {
+            router.push('/login');
+        }
+    }, [isLoading, isAuthenticated, router]);
+
     // Show loading or redirect if not authenticated
     if (isLoading) {
         return (
@@ -84,8 +91,11 @@ export default function ProgressPage() {
     }
 
     if (!isAuthenticated) {
-        router.push('/login');
-        return null;
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
     }
 
     return (
