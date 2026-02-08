@@ -9,7 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Zap, Mail, Lock, User, ArrowRight, Loader2, Check, X } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Zap, Mail, Lock, User, ArrowRight, Loader2, Check, X, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserStore } from '@/store/userStore';
 import { cn } from '@/lib/utils';
@@ -23,6 +31,28 @@ export default function RegisterPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [registrationClosed, setRegistrationClosed] = useState(false);
+    const [checkingSettings, setCheckingSettings] = useState(true);
+
+    // Check if registration is allowed
+    useEffect(() => {
+        const checkRegistration = async () => {
+            try {
+                const response = await fetch('/api/settings/public');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.settings?.allow_registration === false) {
+                        setRegistrationClosed(true);
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking settings:', error);
+            } finally {
+                setCheckingSettings(false);
+            }
+        };
+        checkRegistration();
+    }, []);
 
     // Redirect if already authenticated
     useEffect(() => {
@@ -340,6 +370,39 @@ export default function RegisterPage() {
                     </p>
                 </motion.div>
             </div>
+
+            {/* Registration Closed Dialog */}
+            <Dialog open={registrationClosed} onOpenChange={() => { }}>
+                <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+                    <DialogHeader>
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                                <ShieldAlert className="w-6 h-6 text-destructive" />
+                            </div>
+                            <div>
+                                <DialogTitle>Registration Closed</DialogTitle>
+                                <DialogDescription>
+                                    New registrations are currently disabled
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p className="text-sm text-muted-foreground">
+                            The administrator has temporarily closed new user registrations.
+                            Please try again later or contact the administrator if you need access.
+                        </p>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            className="w-full bg-gradient-primary"
+                            onClick={() => router.push('/login')}
+                        >
+                            Go to Login
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
