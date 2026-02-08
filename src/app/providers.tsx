@@ -2,6 +2,7 @@
 
 import { SessionProvider, useSession } from 'next-auth/react';
 import { ReactNode, useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Wrench, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,9 +13,13 @@ interface ProvidersProps {
 
 function MaintenanceWrapper({ children }: { children: ReactNode }) {
     const { data: session, status } = useSession();
+    const pathname = usePathname();
     const [maintenanceMode, setMaintenanceMode] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [checking, setChecking] = useState(true);
+
+    // Pages that should always be accessible during maintenance
+    const bypassPaths = ['/login', '/api'];
 
     useEffect(() => {
         const checkMaintenance = async () => {
@@ -51,8 +56,11 @@ function MaintenanceWrapper({ children }: { children: ReactNode }) {
         return <>{children}</>;
     }
 
-    // If maintenance mode is on and user is not admin, show maintenance page
-    if (maintenanceMode && !isAdmin) {
+    // Allow bypass paths (login, api routes)
+    const shouldBypass = bypassPaths.some(path => pathname?.startsWith(path));
+
+    // If maintenance mode is on and user is not admin and not on bypass path, show maintenance page
+    if (maintenanceMode && !isAdmin && !shouldBypass) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background">
                 <motion.div
