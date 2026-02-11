@@ -378,6 +378,7 @@ export default function DashboardPage() {
                                             {currentUserRank.rank}
                                         </div>
                                         <Avatar className="w-8 h-8 border-2 border-primary">
+                                            <AvatarImage src={currentUserRank.avatar_url} />
                                             <AvatarFallback className="bg-gradient-primary text-white text-xs">
                                                 {currentUserRank.username.slice(0, 2).toUpperCase()}
                                             </AvatarFallback>
