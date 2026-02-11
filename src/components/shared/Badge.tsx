@@ -37,7 +37,7 @@ export function BadgeDisplay({
             whileHover={{ scale: locked ? 1 : 1.1 }}
             whileTap={{ scale: locked ? 1 : 0.95 }}
             className={cn(
-                'relative flex items-center justify-center rounded-2xl border transition-all',
+                'relative flex items-center justify-center rounded-2xl border transition-all overflow-hidden',
                 locked
                     ? 'bg-muted/50 border-muted text-muted-foreground grayscale opacity-50 cursor-not-allowed'
                     : 'bg-gradient-to-br from-primary/20 to-accent/20 border-primary/30 cursor-pointer hover:shadow-lg hover:glow-sm',
@@ -54,13 +54,16 @@ export function BadgeDisplay({
             {/* Shine effect for unlocked badges */}
             {!locked && (
                 <motion.div
-                    className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                    initial={{ x: '-100%' }}
-                    animate={{ x: '200%' }}
+                    className="absolute inset-0 rounded-2xl"
+                    style={{
+                        background: 'linear-gradient(135deg, transparent 35%, rgba(255,255,255,0.15) 55%, transparent 70%)',
+                    }}
+                    initial={{ x: '-100%', y: '-100%' }}
+                    animate={{ x: '100%', y: '100%' }}
                     transition={{
-                        duration: 3,
+                        duration: 2,
                         repeat: Infinity,
-                        repeatDelay: 5,
+                        ease: 'linear',
                     }}
                 />
             )}
