@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
             };
         });
 
-        // Find current user's rank even if they're admin (query separately)
+        // Find current user's rank (excluding admins from ranking)
         let currentUserRank = null;
         if (currentUserId) {
             const { data: currentUserData } = await supabase
@@ -98,11 +98,12 @@ export async function GET(request: NextRequest) {
 
             const currentUser = currentUserData as LeaderboardUser | null;
 
-            if (currentUser) {
-                // Count how many users have more XP than the current user
+            if (currentUser && currentUser.role !== 'admin') {
+                // Count how many NON-ADMIN users have more XP than the current user
                 const { count } = await supabase
                     .from('users')
                     .select('*', { count: 'exact', head: true })
+                    .neq('role', 'admin')
                     .gt('xp', currentUser.xp);
 
                 currentUserRank = {

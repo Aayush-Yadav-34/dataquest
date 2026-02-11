@@ -58,13 +58,13 @@ export default function DashboardPage() {
         }
     }, [isAuthenticated, isLoading]);
 
-    // Get user info from session or store
+    // Get user info from session or store, with fresh data from useUserData (database source of truth)
     const user = session?.user ? {
-        username: session.user.username || session.user.name || 'User',
-        email: session.user.email || '',
-        avatar: session.user.image,
+        username: userData?.username ?? session.user.username ?? session.user.name ?? 'User',
+        email: userData?.email ?? session.user.email ?? '',
+        avatar: userData?.avatar_url ?? session.user.image,
         role: session.user.role || 'user',
-        // Use fresh XP data from useUserData hook if available
+        // Use fresh data from useUserData hook if available
         xp: userData?.xp ?? session.user.xp ?? 0,
         level: userData?.level ?? session.user.level ?? 1,
         streak: userData?.streak ?? session.user.streak ?? 0,
