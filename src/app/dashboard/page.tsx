@@ -31,12 +31,13 @@ import { useTopics } from '@/hooks/useTopics';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { useUserData } from '@/hooks/useUserData';
 import { useUserStats, useUserProgress } from '@/hooks/useProgress';
+import { useBadges } from '@/hooks/useBadges';
 import { toast } from 'sonner';
 
 export default function DashboardPage() {
     const router = useRouter();
     const { data: session, status } = useSession();
-    const { profile, stats, badges, isAuthenticated: storeAuth } = useUserStore();
+    const { profile, stats, isAuthenticated: storeAuth } = useUserStore();
 
     // Fetch data from APIs
     const { topics, isLoading: topicsLoading } = useTopics();
@@ -44,10 +45,18 @@ export default function DashboardPage() {
     const { userData, isLoading: userDataLoading } = useUserData();
     const { summary: progressStats, skillsData, isLoading: statsLoading } = useUserStats();
     const { progress: userProgress } = useUserProgress();
+    const { earnedBadges, checkAndAwardBadges, isLoading: badgesLoading } = useBadges();
 
     // Combined auth check
     const isAuthenticated = status === 'authenticated' || storeAuth;
     const isLoading = status === 'loading';
+
+    // Check for new badges on dashboard load
+    useEffect(() => {
+        if (isAuthenticated && !isLoading) {
+            checkAndAwardBadges();
+        }
+    }, [isAuthenticated, isLoading]);
 
     // Get user info from session or store
     const user = session?.user ? {
@@ -401,9 +410,19 @@ export default function DashboardPage() {
                                 </Link>
                             </div>
                             <BadgeGrid
-                                badges={badges.filter((b) => !b.locked).slice(0, 6)}
+                                badges={earnedBadges.slice(0, 6).map(b => ({
+                                    id: b.id,
+                                    name: b.name,
+                                    icon: b.icon,
+                                    description: b.description,
+                                    locked: false,
+                                    earnedAt: b.earned_at ? new Date(b.earned_at) : undefined,
+                                }))}
                                 size="md"
                             />
+                            {earnedBadges.length === 0 && !badgesLoading && (
+                                <p className="text-sm text-muted-foreground">No badges earned yet. Keep learning!</p>
+                            )}
                         </motion.section>
 
                         {/* Quick Actions */}

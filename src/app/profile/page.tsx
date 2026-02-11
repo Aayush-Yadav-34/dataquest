@@ -26,15 +26,17 @@ import {
 import { useUserStore } from '@/store/userStore';
 import { useUserData } from '@/hooks/useUserData';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
+import { useBadges } from '@/hooks/useBadges';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {
     const router = useRouter();
     const { data: session, status } = useSession();
-    const { profile, stats, badges, activities, isAuthenticated: storeAuth } = useUserStore();
+    const { profile, stats, activities, isAuthenticated: storeAuth } = useUserStore();
     const { userData, isLoading: userDataLoading } = useUserData();
     const { currentUserRank, isLoading: leaderboardLoading } = useLeaderboard({ limit: 50 });
+    const { badges: apiBadges, earnedBadges, lockedBadges, isLoading: badgesLoading } = useBadges();
 
     // Get user's global rank from leaderboard API
     const globalRank = currentUserRank?.rank || stats.rank;
@@ -165,7 +167,7 @@ export default function ProfilePage() {
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-2 text-emerald-500 mb-1">
                                 <Star className="w-5 h-5" />
-                                <span className="text-2xl font-bold">{badges.filter((b) => !b.locked).length}</span>
+                                <span className="text-2xl font-bold">{earnedBadges.length}</span>
                             </div>
                             <p className="text-sm text-muted-foreground">Badges Earned</p>
                         </div>
@@ -194,29 +196,54 @@ export default function ProfilePage() {
                         >
                             <h2 className="text-xl font-semibold mb-6">Achievement Badges</h2>
 
-                            {/* Earned Badges */}
-                            <div className="mb-8">
-                                <h3 className="text-sm font-medium text-muted-foreground mb-4">
-                                    Earned ({badges.filter((b) => !b.locked).length})
-                                </h3>
-                                <BadgeGrid
-                                    badges={badges.filter((b) => !b.locked)}
-                                    size="lg"
-                                    className="gap-6"
-                                />
-                            </div>
+                            {badgesLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Earned Badges */}
+                                    <div className="mb-8">
+                                        <h3 className="text-sm font-medium text-muted-foreground mb-4">
+                                            Earned ({earnedBadges.length})
+                                        </h3>
+                                        {earnedBadges.length > 0 ? (
+                                            <BadgeGrid
+                                                badges={earnedBadges.map(b => ({
+                                                    id: b.id,
+                                                    name: b.name,
+                                                    icon: b.icon,
+                                                    description: b.description,
+                                                    locked: false,
+                                                    earnedAt: b.earned_at ? new Date(b.earned_at) : undefined,
+                                                }))}
+                                                size="lg"
+                                                className="gap-6"
+                                            />
+                                        ) : (
+                                            <p className="text-muted-foreground text-sm py-4">Complete quizzes and topics to earn badges!</p>
+                                        )}
+                                    </div>
 
-                            {/* Locked Badges */}
-                            <div>
-                                <h3 className="text-sm font-medium text-muted-foreground mb-4">
-                                    Locked ({badges.filter((b) => b.locked).length})
-                                </h3>
-                                <BadgeGrid
-                                    badges={badges.filter((b) => b.locked)}
-                                    size="lg"
-                                    className="gap-6"
-                                />
-                            </div>
+                                    {/* Locked Badges */}
+                                    <div>
+                                        <h3 className="text-sm font-medium text-muted-foreground mb-4">
+                                            Locked ({lockedBadges.length})
+                                        </h3>
+                                        <BadgeGrid
+                                            badges={lockedBadges.map(b => ({
+                                                id: b.id,
+                                                name: b.name,
+                                                icon: b.icon,
+                                                description: b.description,
+                                                locked: true,
+                                            }))}
+                                            size="lg"
+                                            className="gap-6"
+                                        />
+                                    </div>
+                                </>
+                            )}
                         </motion.div>
                     </TabsContent>
 

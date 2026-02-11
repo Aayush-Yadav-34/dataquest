@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 
 export interface QuizQuestion {
     id: string;
@@ -38,6 +39,7 @@ export interface QuizSubmitResult {
     xpEarned: number;
     newXP: number;
     newLevel: number;
+    newBadges?: { id: string; name: string; icon: string; description: string }[];
 }
 
 interface UseQuizzesReturn {
@@ -138,7 +140,23 @@ export function useQuiz(quizId: string | null): UseQuizReturn {
                 throw new Error('Failed to submit quiz');
             }
 
-            return await response.json();
+            const result = await response.json();
+
+            // Show badge toasts for newly earned badges
+            if (result.newBadges && result.newBadges.length > 0) {
+                setTimeout(() => {
+                    result.newBadges.forEach((badge: any, index: number) => {
+                        setTimeout(() => {
+                            toast.success(`${badge.icon} Badge Earned: ${badge.name}`, {
+                                description: badge.description,
+                                duration: 5000,
+                            });
+                        }, index * 1000);
+                    });
+                }, 1500); // Delay so quiz result renders first
+            }
+
+            return result;
         } catch (err) {
             console.error('Error submitting quiz:', err);
             return null;

@@ -118,6 +118,59 @@ export async function POST(
             xp_earned: xpEarned,
         });
 
+        // Check and award badges after quiz completion
+        let newBadges: any[] = [];
+        try {
+            // Get all badges
+            const { data: allBadges } = await supabase.from('badges').select('*');
+            // Get already earned
+            const { data: earnedBadges } = await supabase
+                .from('user_badges')
+                .select('badge_id')
+                .eq('user_id', user.id);
+            const earnedIds = new Set(((earnedBadges as any[]) || []).map((ub: any) => ub.badge_id));
+
+            // Get quiz attempt count and completed topic count
+            const { count: quizCount } = await supabase
+                .from('quiz_attempts')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', user.id);
+            const { count: topicCount } = await supabase
+                .from('user_progress')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', user.id)
+                .eq('completed', true);
+
+            // Get updated user data for streak
+            const { data: updatedUser } = await supabase
+                .from('users')
+                .select('streak')
+                .eq('id', user.id)
+                .single();
+            const streak = (updatedUser as any)?.streak || 0;
+
+            for (const badge of ((allBadges as any[]) || [])) {
+                if (earnedIds.has(badge.id)) continue;
+                let eligible = false;
+                switch (badge.criteria_type) {
+                    case 'xp': eligible = newXP >= badge.criteria_value; break;
+                    case 'quizzes': eligible = (quizCount || 0) >= badge.criteria_value; break;
+                    case 'topics': eligible = (topicCount || 0) >= badge.criteria_value; break;
+                    case 'streak': eligible = streak >= badge.criteria_value; break;
+                }
+                if (eligible) {
+                    const { error: insertErr } = await supabase
+                        .from('user_badges')
+                        .insert({ user_id: user.id, badge_id: badge.id });
+                    if (!insertErr) {
+                        newBadges.push({ id: badge.id, name: badge.name, icon: badge.icon, description: badge.description });
+                    }
+                }
+            }
+        } catch (badgeErr) {
+            console.error('Error checking badges:', badgeErr);
+        }
+
         return NextResponse.json({
             success: true,
             score,
@@ -127,6 +180,7 @@ export async function POST(
             xpEarned,
             newXP,
             newLevel,
+            newBadges,
         });
     } catch (error) {
         console.error('Error submitting quiz:', error);
