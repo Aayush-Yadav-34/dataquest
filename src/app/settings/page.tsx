@@ -31,7 +31,7 @@ import { cn } from '@/lib/utils';
 
 export default function SettingsPage() {
     const router = useRouter();
-    const { data: session, status } = useSession();
+    const { data: session, status, update } = useSession();
     const { profile, isAuthenticated: storeAuth } = useUserStore();
     const { userData, refetch: refetchUserData, isLoading: userDataLoading } = useUserData();
 
@@ -114,6 +114,8 @@ export default function SettingsPage() {
                 setSavedSection('profile');
                 setTimeout(() => setSavedSection(null), 2000);
                 toast.success('Profile updated successfully!');
+                // Update session with new username to prevent flash of old name
+                await update({ user: { name: username, username: username } });
                 // Refetch user data to update the UI with new username
                 await refetchUserData();
             } else {
@@ -196,7 +198,10 @@ export default function SettingsPage() {
             if (response.ok) {
                 const data = await response.json();
                 setAvatarUrl(data.avatar_url);
+                setAvatarUrl(data.avatar_url);
                 toast.success('Avatar updated successfully!');
+                // Update session with new avatar
+                await update({ user: { image: data.avatar_url, picture: data.avatar_url } });
                 await refetchUserData();
             } else {
                 const data = await response.json();

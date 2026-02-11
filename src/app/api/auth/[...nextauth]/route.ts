@@ -107,7 +107,13 @@ export const authOptions: NextAuthOptions = {
 
             return true;
         },
-        async jwt({ token, user }) {
+        async jwt({ token, user, trigger, session }) {
+            // Handle session update
+            if (trigger === "update" && session) {
+                // Update token with new session data
+                return { ...token, ...session.user };
+            }
+
             if (user) {
                 const supabase = createServiceRoleClient();
                 const { data: dbUser } = await supabase
