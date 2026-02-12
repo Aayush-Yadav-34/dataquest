@@ -63,8 +63,6 @@ export default function ProgressPage() {
         });
     }, [topics]);
 
-    // Weekly activity data — from real session & activity data via API
-
     // Redirect if not authenticated (in useEffect to avoid render-time state updates)
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
@@ -293,9 +291,11 @@ export default function ProgressPage() {
                                                 color: '#a3a3a3',
                                             },
                                             yaxis: {
-                                                title: { text: 'Minutes' },
+                                                title: 'Minutes',
                                                 gridcolor: 'rgba(255,255,255,0.1)',
                                                 color: '#a3a3a3',
+                                                rangemode: 'tozero',
+                                                dtick: weeklyActivity.every(d => d.minutes === 0) ? 10 : undefined,
                                             },
                                             margin: { t: 20, b: 40, l: 50, r: 20 },
                                             bargap: 0.3,
@@ -333,19 +333,19 @@ export default function ProgressPage() {
                             </CardHeader>
                             <CardContent className="flex flex-col items-center justify-center pt-4">
                                 <CircularProgress
-                                    progress={(stats.topicsCompleted / stats.totalTopics) * 100}
+                                    progress={summary?.totalTopics ? (summary.completedTopics / summary.totalTopics) * 100 : 0}
                                     size={180}
                                     strokeWidth={12}
                                     label="Complete"
                                 />
                                 <div className="grid grid-cols-2 gap-4 mt-6 w-full">
                                     <div className="text-center">
-                                        <p className="text-2xl font-bold text-primary">{stats.topicsCompleted}</p>
+                                        <p className="text-2xl font-bold text-primary">{summary?.completedTopics || 0}</p>
                                         <p className="text-xs text-muted-foreground">Completed</p>
                                     </div>
                                     <div className="text-center">
                                         <p className="text-2xl font-bold text-muted-foreground">
-                                            {stats.totalTopics - stats.topicsCompleted}
+                                            {(summary?.totalTopics || 0) - (summary?.completedTopics || 0)}
                                         </p>
                                         <p className="text-xs text-muted-foreground">Remaining</p>
                                     </div>

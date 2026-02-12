@@ -46,8 +46,8 @@ export function useTopics(options?: UseTopicsOptions) {
                 // Add frontend-specific fields, preserve locked from database
                 const enrichedTopics = data.topics.map((topic: Topic) => ({
                     ...topic,
-                    progress: 0, // Would come from user_progress table
-                    locked: topic.locked ?? false, // Use database value with fallback
+                    progress: topic.progress ?? 0,
+                    locked: topic.locked ?? false,
                 }));
                 setTopics(enrichedTopics);
             } else {
