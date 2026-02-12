@@ -937,24 +937,35 @@ export default function AdminPage() {
                                                     <TableCell>{topic.studentsCompleted}</TableCell>
                                                     <TableCell className="text-right">
                                                         <div className="flex items-center justify-end gap-2">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
+                                                            <button
+                                                                type="button"
+                                                                title="Edit topic"
+                                                                className={cn(
+                                                                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
+                                                                    'transition-all duration-200 cursor-pointer border',
+                                                                    'hover:scale-105 hover:shadow-md active:scale-95',
+                                                                    'bg-blue-500/15 text-blue-400 border-blue-500/30 hover:bg-blue-500/25 hover:border-blue-500/50'
+                                                                )}
                                                                 onClick={() => {
                                                                     setEditingTopic(topic);
                                                                     setIsEditTopicOpen(true);
                                                                 }}
                                                             >
-                                                                <Edit className="w-4 h-4" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="text-destructive"
+                                                                <Edit className="w-3.5 h-3.5" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                title="Delete topic"
+                                                                className={cn(
+                                                                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
+                                                                    'transition-all duration-200 cursor-pointer border',
+                                                                    'hover:scale-105 hover:shadow-md active:scale-95',
+                                                                    'bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/25 hover:border-red-500/50'
+                                                                )}
                                                                 onClick={() => handleDeleteTopic(topic.id)}
                                                             >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Button>
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -1071,32 +1082,48 @@ export default function AdminPage() {
                                                         <TableCell className="text-primary">+{quiz.xpReward} XP</TableCell>
                                                         <TableCell className="text-right">
                                                             <div className="flex items-center justify-end gap-2">
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
+                                                                <button
+                                                                    type="button"
                                                                     title="Manage Questions"
+                                                                    className={cn(
+                                                                        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
+                                                                        'transition-all duration-200 cursor-pointer border',
+                                                                        'hover:scale-105 hover:shadow-md active:scale-95',
+                                                                        'bg-purple-500/15 text-purple-400 border-purple-500/30 hover:bg-purple-500/25 hover:border-purple-500/50'
+                                                                    )}
                                                                     onClick={() => openManageQuestions(quiz)}
                                                                 >
-                                                                    <BookOpen className="w-4 h-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
+                                                                    <BookOpen className="w-3.5 h-3.5" />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    title="Edit quiz"
+                                                                    className={cn(
+                                                                        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
+                                                                        'transition-all duration-200 cursor-pointer border',
+                                                                        'hover:scale-105 hover:shadow-md active:scale-95',
+                                                                        'bg-blue-500/15 text-blue-400 border-blue-500/30 hover:bg-blue-500/25 hover:border-blue-500/50'
+                                                                    )}
                                                                     onClick={() => {
                                                                         setEditingQuiz(quiz);
                                                                         setIsEditQuizOpen(true);
                                                                     }}
                                                                 >
-                                                                    <Edit className="w-4 h-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="text-destructive"
+                                                                    <Edit className="w-3.5 h-3.5" />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    title="Delete quiz"
+                                                                    className={cn(
+                                                                        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
+                                                                        'transition-all duration-200 cursor-pointer border',
+                                                                        'hover:scale-105 hover:shadow-md active:scale-95',
+                                                                        'bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/25 hover:border-red-500/50'
+                                                                    )}
                                                                     onClick={() => handleDeleteQuiz(quiz.id)}
                                                                 >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </Button>
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
                                                             </div>
                                                         </TableCell>
                                                     </TableRow>
