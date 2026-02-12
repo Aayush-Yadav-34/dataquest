@@ -149,10 +149,76 @@ export async function GET(request: NextRequest) {
             ) / quizAttempts.length)
             : 0;
 
+        // Build weekly activity data from activities (XP) and session_logs (minutes)
+        const weeklyActivity: { day: string; minutes: number; xp: number }[] = [];
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const now = new Date();
+
+        // Initialize last 7 days
+        const dayMap = new Map<string, { minutes: number; xp: number; dayName: string }>();
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            const key = d.toISOString().split('T')[0]; // YYYY-MM-DD
+            dayMap.set(key, { minutes: 0, xp: 0, dayName: dayNames[d.getDay()] });
+        }
+
+        // Get the start date (7 days ago)
+        const sevenDaysAgo = new Date(now);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        // Fetch XP earned per day from activities
+        const { data: recentActivities } = await supabase
+            .from('activities')
+            .select('xp_earned, created_at')
+            .eq('user_id', userId)
+            .gte('created_at', sevenDaysAgo.toISOString())
+            .order('created_at', { ascending: true });
+
+        if (recentActivities) {
+            (recentActivities as any[]).forEach((act: any) => {
+                const dateKey = new Date(act.created_at).toISOString().split('T')[0];
+                const entry = dayMap.get(dateKey);
+                if (entry) {
+                    entry.xp += act.xp_earned || 0;
+                }
+            });
+        }
+
+        // Fetch session minutes per day from session_logs
+        const { data: recentSessions } = await supabase
+            .from('session_logs' as any)
+            .select('duration_seconds, session_start')
+            .eq('user_id', userId)
+            .gte('session_start', sevenDaysAgo.toISOString())
+            .not('duration_seconds', 'is', null)
+            .order('session_start', { ascending: true });
+
+        if (recentSessions) {
+            (recentSessions as any[]).forEach((sess: any) => {
+                const dateKey = new Date(sess.session_start).toISOString().split('T')[0];
+                const entry = dayMap.get(dateKey);
+                if (entry) {
+                    entry.minutes += Math.round((sess.duration_seconds || 0) / 60);
+                }
+            });
+        }
+
+        // Convert map to ordered array
+        for (const [, value] of dayMap) {
+            weeklyActivity.push({
+                day: value.dayName,
+                minutes: value.minutes,
+                xp: value.xp,
+            });
+        }
+
         return NextResponse.json({
             skillsData,
             accuracyTrend,
             timeSpentData,
+            weeklyActivity,
             summary: {
                 completedTopics,
                 totalTopics: topics?.length || 0,

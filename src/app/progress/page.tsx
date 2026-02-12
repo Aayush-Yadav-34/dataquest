@@ -37,7 +37,7 @@ export default function ProgressPage() {
     const { profile, stats, isAuthenticated: storeAuth } = useUserStore();
     const { topics, isLoading: topicsLoading } = useTopics();
     const { userData } = useUserData();
-    const { skillsData, accuracyTrend, timeSpentData, summary, isLoading: statsLoading } = useUserStats();
+    const { skillsData, accuracyTrend, timeSpentData, weeklyActivity, summary, isLoading: statsLoading } = useUserStats();
     const { currentUserRank, isLoading: leaderboardLoading } = useLeaderboard({ limit: 50 });
 
     // Get global rank from leaderboard API
@@ -63,16 +63,7 @@ export default function ProgressPage() {
         });
     }, [topics]);
 
-    // Weekly activity data
-    const weeklyActivity = [
-        { day: 'Mon', minutes: 45, xp: 120 },
-        { day: 'Tue', minutes: 30, xp: 80 },
-        { day: 'Wed', minutes: 60, xp: 150 },
-        { day: 'Thu', minutes: 0, xp: 0 },
-        { day: 'Fri', minutes: 75, xp: 200 },
-        { day: 'Sat', minutes: 90, xp: 250 },
-        { day: 'Sun', minutes: 45, xp: 100 },
-    ];
+    // Weekly activity data — from real session & activity data via API
 
     // Redirect if not authenticated (in useEffect to avoid render-time state updates)
     useEffect(() => {
@@ -302,7 +293,7 @@ export default function ProgressPage() {
                                                 color: '#a3a3a3',
                                             },
                                             yaxis: {
-                                                title: 'Minutes',
+                                                title: { text: 'Minutes' },
                                                 gridcolor: 'rgba(255,255,255,0.1)',
                                                 color: '#a3a3a3',
                                             },

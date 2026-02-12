@@ -59,10 +59,17 @@ interface TimeSpentData {
     hours: number;
 }
 
+interface WeeklyActivity {
+    day: string;
+    minutes: number;
+    xp: number;
+}
+
 interface StatsData {
     skillsData: SkillData[];
     accuracyTrend: AccuracyTrend[];
     timeSpentData: TimeSpentData[];
+    weeklyActivity: WeeklyActivity[];
     summary: {
         completedTopics: number;
         totalTopics: number;
@@ -167,6 +174,7 @@ export function useUserStats() {
         skillsData: data?.skillsData || [],
         accuracyTrend: data?.accuracyTrend || [],
         timeSpentData: data?.timeSpentData || [],
+        weeklyActivity: data?.weeklyActivity || [],
         summary: data?.summary,
         isLoading,
         error,
