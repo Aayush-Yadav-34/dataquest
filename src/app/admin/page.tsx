@@ -894,7 +894,6 @@ export default function AdminPage() {
                                                 <TableHead>Category</TableHead>
                                                 <TableHead>Difficulty</TableHead>
                                                 <TableHead>Status</TableHead>
-                                                <TableHead>Questions</TableHead>
                                                 <TableHead>Completed By</TableHead>
                                                 <TableHead className="text-right">Actions</TableHead>
                                             </TableRow>
@@ -935,7 +934,6 @@ export default function AdminPage() {
                                                             {topic.status === 'published' ? 'Published' : 'Draft'}
                                                         </button>
                                                     </TableCell>
-                                                    <TableCell>{topic.questionsCount}</TableCell>
                                                     <TableCell>{topic.studentsCompleted}</TableCell>
                                                     <TableCell className="text-right">
                                                         <div className="flex items-center justify-end gap-2">
@@ -1376,25 +1374,52 @@ export default function AdminPage() {
                                                             </div>
                                                         </TableCell>
                                                         <TableCell>
-                                                            <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                                                            <span className={cn(
+                                                                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border',
+                                                                user.role === 'admin'
+                                                                    ? 'bg-purple-500/15 text-purple-400 border-purple-500/30'
+                                                                    : 'bg-slate-500/15 text-slate-400 border-slate-500/30'
+                                                            )}>
+                                                                {user.role === 'admin' ? (
+                                                                    <Shield className="w-3.5 h-3.5" />
+                                                                ) : (
+                                                                    <UserCheck className="w-3.5 h-3.5" />
+                                                                )}
                                                                 {user.role}
-                                                            </Badge>
+                                                            </span>
                                                         </TableCell>
                                                         <TableCell>{user.xp.toLocaleString()}</TableCell>
                                                         <TableCell>{user.level}</TableCell>
                                                         <TableCell>
-                                                            {user.blocked ? (
-                                                                <Badge variant="destructive">Blocked</Badge>
-                                                            ) : (
-                                                                <Badge variant="outline" className="text-emerald-500 border-emerald-500">Active</Badge>
-                                                            )}
+                                                            <span className={cn(
+                                                                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border',
+                                                                'transition-all duration-200',
+                                                                user.blocked
+                                                                    ? 'bg-red-500/15 text-red-400 border-red-500/30'
+                                                                    : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                                                            )}>
+                                                                {user.blocked ? (
+                                                                    <Ban className="w-3.5 h-3.5" />
+                                                                ) : (
+                                                                    <CheckCircle className="w-3.5 h-3.5" />
+                                                                )}
+                                                                {user.blocked ? 'Blocked' : 'Active'}
+                                                            </span>
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             {user.role !== 'admin' && (
                                                                 <div className="flex justify-end gap-2">
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        size="sm"
+                                                                    <button
+                                                                        type="button"
+                                                                        title={user.blocked ? 'Click to unblock user' : 'Click to block user'}
+                                                                        className={cn(
+                                                                            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
+                                                                            'transition-all duration-200 cursor-pointer border',
+                                                                            'hover:scale-105 hover:shadow-md active:scale-95',
+                                                                            user.blocked
+                                                                                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25 hover:border-emerald-500/50'
+                                                                                : 'bg-amber-500/15 text-amber-400 border-amber-500/30 hover:bg-amber-500/25 hover:border-amber-500/50'
+                                                                        )}
                                                                         onClick={async () => {
                                                                             try {
                                                                                 const res = await fetch('/api/admin/users', {
@@ -1415,18 +1440,24 @@ export default function AdminPage() {
                                                                         }}
                                                                     >
                                                                         {user.blocked ? (
-                                                                            <><UserCheck className="w-4 h-4 mr-1" /> Unblock</>
+                                                                            <><UserCheck className="w-3.5 h-3.5" /> Unblock</>
                                                                         ) : (
-                                                                            <><Ban className="w-4 h-4 mr-1" /> Block</>
+                                                                            <><Ban className="w-3.5 h-3.5" /> Block</>
                                                                         )}
-                                                                    </Button>
-                                                                    <Button
-                                                                        variant="destructive"
-                                                                        size="sm"
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        title="Delete user"
+                                                                        className={cn(
+                                                                            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
+                                                                            'transition-all duration-200 cursor-pointer border',
+                                                                            'hover:scale-105 hover:shadow-md active:scale-95',
+                                                                            'bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/25 hover:border-red-500/50'
+                                                                        )}
                                                                         onClick={() => setDeleteUserId(user.id)}
                                                                     >
-                                                                        <Trash2 className="w-4 h-4" />
-                                                                    </Button>
+                                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                                    </button>
                                                                 </div>
                                                             )}
                                                         </TableCell>
