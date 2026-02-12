@@ -1163,10 +1163,18 @@ export default function AdminPage() {
                                             </div>
                                             <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
                                                 <DialogTrigger asChild>
-                                                    <Button variant="outline">
-                                                        <RefreshCw className="w-4 h-4 mr-2" />
+                                                    <button
+                                                        type="button"
+                                                        className={cn(
+                                                            'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold',
+                                                            'transition-all duration-200 cursor-pointer border',
+                                                            'hover:scale-105 hover:shadow-md active:scale-95',
+                                                            'bg-amber-500/15 text-amber-500 border-amber-500/30 hover:bg-amber-500/25 hover:border-amber-500/50'
+                                                        )}
+                                                    >
+                                                        <RefreshCw className="w-4 h-4" />
                                                         Reset Weekly
-                                                    </Button>
+                                                    </button>
                                                 </DialogTrigger>
                                                 <DialogContent>
                                                     <DialogHeader>
