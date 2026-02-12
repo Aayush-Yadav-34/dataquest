@@ -18,7 +18,7 @@ export async function POST() {
             .from('users')
             .select('id, streak, last_active')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (userError || !user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -57,12 +57,12 @@ export async function POST() {
         }
 
         // Update streak and last_active
-        const { error: updateError } = await supabase
-            .from('users')
+        const { error: updateError } = await (supabase
+            .from('users') as any)
             .update({
                 streak: newStreak,
                 last_active: now.toISOString(),
-            } as any)
+            })
             .eq('id', userId);
 
         if (updateError) {
@@ -96,7 +96,7 @@ export async function GET() {
             .from('users')
             .select('streak, last_active')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (error || !user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });

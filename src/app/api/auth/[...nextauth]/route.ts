@@ -27,7 +27,7 @@ export const authOptions: NextAuthOptions = {
                     .from('users')
                     .select('*')
                     .eq('email', credentials.email)
-                    .single();
+                    .single() as any;
 
                 if (error || !user) {
                     throw new Error('Invalid email or password');
@@ -63,13 +63,13 @@ export const authOptions: NextAuthOptions = {
                     .from('users')
                     .select('id')
                     .eq('email', user.email!)
-                    .single();
+                    .single() as any;
 
                 if (!existingUser) {
                     // Create new user
                     const username = user.email!.split('@')[0] + '_' + Math.random().toString(36).slice(2, 6);
 
-                    const { error } = await supabase.from('users').insert({
+                    const { error } = await (supabase.from('users') as any).insert({
                         email: user.email!,
                         username,
                         avatar_url: user.image,
@@ -89,7 +89,7 @@ export const authOptions: NextAuthOptions = {
                     .from('users')
                     .select('blocked')
                     .eq('email', user.email)
-                    .single();
+                    .single() as any;
 
                 if (userData?.blocked) {
                     console.log('Blocked user attempted login:', user.email);
@@ -99,8 +99,8 @@ export const authOptions: NextAuthOptions = {
 
             // Update last_active for all users on every login
             if (user.email) {
-                await supabase
-                    .from('users')
+                await (supabase
+                    .from('users') as any)
                     .update({ last_active: new Date().toISOString() })
                     .eq('email', user.email);
             }
@@ -120,7 +120,7 @@ export const authOptions: NextAuthOptions = {
                     .from('users')
                     .select('id, role, username, xp, level, streak')
                     .eq('email', user.email!)
-                    .single();
+                    .single() as any;
 
                 if (dbUser) {
                     token.id = dbUser.id;

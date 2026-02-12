@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
             .from('users')
             .select('id, xp, level, streak, weekly_xp')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (fetchError || !user) {
             return NextResponse.json(
@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
         const newLevel = calculateLevel(newXP);
 
         // Update user in database (both total XP and weekly XP)
-        const { error: updateError } = await supabase
-            .from('users')
+        const { error: updateError } = await (supabase
+            .from('users') as any)
             .update({
                 xp: newXP,
                 weekly_xp: newWeeklyXP,
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
         // Log activity if action is provided
         if (action) {
-            await supabase.from('activities').insert({
+            await (supabase.from('activities') as any).insert({
                 user_id: user.id,
                 type: action.type || 'xp',
                 title: action.title || 'XP Earned',
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
             .from('users')
             .select('username, email, avatar_url, xp, level, streak')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (error || !user) {
             return NextResponse.json(

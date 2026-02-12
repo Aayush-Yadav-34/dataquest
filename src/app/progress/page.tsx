@@ -299,7 +299,7 @@ export default function ProgressPage() {
                                             },
                                             margin: { t: 20, b: 40, l: 50, r: 20 },
                                             bargap: 0.3,
-                                        }}
+                                        } as any}
                                         config={{ responsive: true, displayModeBar: false }}
                                         style={{ width: '100%', height: '250px' }}
                                     />

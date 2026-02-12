@@ -558,7 +558,7 @@ function HistogramChart({ data, column }: { data: DatasetRow[]; column: string }
                 xaxis: { title: column, gridcolor: 'rgba(255,255,255,0.1)', color: '#a3a3a3' },
                 yaxis: { title: 'Frequency', gridcolor: 'rgba(255,255,255,0.1)', color: '#a3a3a3' },
                 margin: { t: 50, b: 50, l: 60, r: 30 },
-            }}
+            } as any}
             config={{ responsive: true, displayModeBar: false }}
             style={{ width: '100%', height: '400px' }}
         />
@@ -585,7 +585,7 @@ function BoxPlotChart({ data, column }: { data: DatasetRow[]; column: string }) 
                 plot_bgcolor: 'rgba(0,0,0,0.2)',
                 yaxis: { title: column, gridcolor: 'rgba(255,255,255,0.1)', color: '#a3a3a3' },
                 margin: { t: 50, b: 50, l: 60, r: 30 },
-            }}
+            } as any}
             config={{ responsive: true, displayModeBar: false }}
             style={{ width: '100%', height: '400px' }}
         />
@@ -618,7 +618,7 @@ function ScatterChart({ data, xColumn, yColumn }: { data: DatasetRow[]; xColumn:
                 xaxis: { title: xColumn, gridcolor: 'rgba(255,255,255,0.1)', color: '#a3a3a3' },
                 yaxis: { title: yColumn, gridcolor: 'rgba(255,255,255,0.1)', color: '#a3a3a3' },
                 margin: { t: 50, b: 50, l: 60, r: 30 },
-            }}
+            } as any}
             config={{ responsive: true, displayModeBar: false }}
             style={{ width: '100%', height: '400px' }}
         />
@@ -684,7 +684,7 @@ function CorrelationHeatmap({ data, columns }: { data: DatasetRow[]; columns: st
                 xaxis: { color: '#a3a3a3' },
                 yaxis: { color: '#a3a3a3' },
                 margin: { t: 50, b: 80, l: 80, r: 30 },
-            }}
+            } as any}
             config={{ responsive: true, displayModeBar: false }}
             style={{ width: '100%', height: '400px' }}
         />
@@ -722,7 +722,7 @@ function MissingValuesChart({ stats }: { stats: ColumnStats[] }) {
                 xaxis: { color: '#a3a3a3' },
                 yaxis: { title: 'Missing Count', gridcolor: 'rgba(255,255,255,0.1)', color: '#a3a3a3' },
                 margin: { t: 20, b: 80, l: 60, r: 20 },
-            }}
+            } as any}
             config={{ responsive: true, displayModeBar: false }}
             style={{ width: '100%', height: '300px' }}
         />

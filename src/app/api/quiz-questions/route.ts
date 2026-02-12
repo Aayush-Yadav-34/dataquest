@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
             .from('users')
             .select('role')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (user?.role !== 'admin') {
             return NextResponse.json(
@@ -40,8 +40,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { data: newQuestion, error } = await supabase
-            .from('quiz_questions')
+        const { data: newQuestion, error } = await (supabase
+            .from('quiz_questions') as any)
             .insert({
                 quiz_id,
                 question,

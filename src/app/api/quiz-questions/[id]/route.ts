@@ -25,7 +25,7 @@ export async function PATCH(
             .from('users')
             .select('role')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (user?.role !== 'admin') {
             return NextResponse.json(
@@ -43,8 +43,8 @@ export async function PATCH(
         if (correct_answer !== undefined) updateData.correct_answer = correct_answer;
         if (explanation !== undefined) updateData.explanation = explanation;
 
-        const { data: updatedQuestion, error } = await supabase
-            .from('quiz_questions')
+        const { data: updatedQuestion, error } = await (supabase
+            .from('quiz_questions') as any)
             .update(updateData)
             .eq('id', id)
             .select()
@@ -91,7 +91,7 @@ export async function DELETE(
             .from('users')
             .select('role')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (user?.role !== 'admin') {
             return NextResponse.json(

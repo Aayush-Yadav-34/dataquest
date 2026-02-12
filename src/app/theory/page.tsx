@@ -277,7 +277,7 @@ function TopicCard({ topic, index }: TopicCardProps) {
                     </p>
 
                     {/* Progress Bar */}
-                    {!topic.locked && topic.progress > 0 && (
+                    {!topic.locked && (topic.progress ?? 0) > 0 && (
                         <div className="mb-4">
                             <div className="flex justify-between text-sm mb-1">
                                 <span className="text-muted-foreground">Progress</span>

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
             .from('users')
             .select('id, email, username, avatar_url, xp, level, streak, last_active, role, created_at')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (error || !user) {
             return NextResponse.json(
@@ -60,7 +60,7 @@ export async function PATCH(request: NextRequest) {
             .from('users')
             .select('id')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (!currentUser) {
             return NextResponse.json(
@@ -91,8 +91,8 @@ export async function PATCH(request: NextRequest) {
         if (username) updateData.username = username;
         if (avatar_url !== undefined) updateData.avatar_url = avatar_url;
 
-        const { data: updatedUser, error } = await supabase
-            .from('users')
+        const { data: updatedUser, error } = await (supabase
+            .from('users') as any)
             .update(updateData)
             .eq('id', currentUser.id)
             .select('id, email, username, avatar_url, xp, level, streak, role')

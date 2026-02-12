@@ -21,7 +21,7 @@ export async function GET() {
             .from('users')
             .select('role')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (user?.role !== 'admin') {
             return NextResponse.json(
@@ -34,7 +34,7 @@ export async function GET() {
         const { data: topics, error: topicsError } = await supabase
             .from('topics')
             .select('*')
-            .order('order_index', { ascending: true });
+            .order('order_index', { ascending: true }) as any;
 
         if (topicsError) {
             console.error('Error fetching topics:', topicsError);
@@ -47,20 +47,20 @@ export async function GET() {
         // Get question counts per topic (via quizzes)
         const { data: quizzes } = await supabase
             .from('quizzes')
-            .select('id, topic_id');
+            .select('id, topic_id') as any;
 
         const { data: questions } = await supabase
             .from('quiz_questions')
-            .select('quiz_id');
+            .select('quiz_id') as any;
 
         // Count questions per topic
         const questionCountByTopic: Record<string, number> = {};
         if (quizzes && questions) {
             const quizToTopic: Record<string, string> = {};
-            quizzes.forEach(q => {
+            quizzes.forEach((q: any) => {
                 quizToTopic[q.id] = q.topic_id;
             });
-            questions.forEach(q => {
+            questions.forEach((q: any) => {
                 const topicId = quizToTopic[q.quiz_id];
                 if (topicId) {
                     questionCountByTopic[topicId] = (questionCountByTopic[topicId] || 0) + 1;
@@ -72,17 +72,17 @@ export async function GET() {
         const { data: completions } = await supabase
             .from('user_progress')
             .select('topic_id')
-            .eq('completed', true);
+            .eq('completed', true) as any;
 
         const completedCountByTopic: Record<string, number> = {};
         if (completions) {
-            completions.forEach(c => {
+            completions.forEach((c: any) => {
                 completedCountByTopic[c.topic_id] = (completedCountByTopic[c.topic_id] || 0) + 1;
             });
         }
 
         // Enrich topics with counts
-        const enrichedTopics = topics.map(topic => ({
+        const enrichedTopics = (topics || []).map((topic: any) => ({
             ...topic,
             questionsCount: questionCountByTopic[topic.id] || 0,
             studentsCompleted: completedCountByTopic[topic.id] || 0,

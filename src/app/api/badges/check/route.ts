@@ -97,8 +97,8 @@ export async function POST(request: NextRequest) {
 
             if (eligible) {
                 // Award the badge
-                const { error: insertError } = await supabase
-                    .from('user_badges')
+                const { error: insertError } = await (supabase
+                    .from('user_badges') as any)
                     .insert({
                         user_id: user.id,
                         badge_id: badge.id,

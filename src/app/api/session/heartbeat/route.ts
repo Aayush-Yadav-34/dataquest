@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
             .from('users')
             .select('id')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (userError || !userData) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
             .from('app_settings')
             .select('value')
             .eq('key', 'session_time_tracking')
-            .single();
+            .single() as any;
 
         if ((settingsData as { value: string } | null)?.value !== 'true') {
             return NextResponse.json({ message: 'Session tracking disabled' });
@@ -57,18 +57,18 @@ export async function POST(request: NextRequest) {
             }
 
             // Update last_active
-            await supabase
-                .from('users')
-                .update({ last_active: new Date().toISOString() } as any)
+            await (supabase
+                .from('users') as any)
+                .update({ last_active: new Date().toISOString() })
                 .eq('id', userId);
 
             return NextResponse.json({ sessionId: (newSession as any)?.id });
 
         } else if (action === 'heartbeat' && sessionId) {
             // Update last_active timestamp
-            await supabase
-                .from('users')
-                .update({ last_active: new Date().toISOString() } as any)
+            await (supabase
+                .from('users') as any)
+                .update({ last_active: new Date().toISOString() })
                 .eq('id', userId);
 
             return NextResponse.json({ success: true });
@@ -87,12 +87,12 @@ export async function POST(request: NextRequest) {
                 const durationSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
 
                 // Update session log
-                await supabase
-                    .from('session_logs' as any)
+                await (supabase
+                    .from('session_logs' as any) as any)
                     .update({
                         session_end: endTime.toISOString(),
                         duration_seconds: durationSeconds,
-                    } as any)
+                    })
                     .eq('id', sessionId);
 
                 // Update user's total time spent

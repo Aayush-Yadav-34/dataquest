@@ -108,8 +108,8 @@ export async function PATCH(request: NextRequest) {
             );
         }
 
-        const { error } = await supabase
-            .from('users')
+        const { error } = await (supabase
+            .from('users') as any)
             .update({ blocked })
             .eq('id', userId);
 

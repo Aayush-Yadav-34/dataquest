@@ -33,7 +33,7 @@ export async function DELETE(request: NextRequest) {
             .from('users')
             .select('id, password_hash, role')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (userError || !userData) {
             return NextResponse.json(

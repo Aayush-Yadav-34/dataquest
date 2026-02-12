@@ -35,7 +35,7 @@ export async function POST(
             .from('users')
             .select('id, xp, level')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (userError || !user) {
             return NextResponse.json(
@@ -57,7 +57,7 @@ export async function POST(
                 )
             `)
             .eq('id', quizId)
-            .single();
+            .single() as any;
 
         if (quizError || !quiz) {
             return NextResponse.json(
@@ -82,8 +82,8 @@ export async function POST(
         const xpEarned = passed ? quiz.xp_reward : Math.floor(quiz.xp_reward * 0.3);
 
         // Record quiz attempt
-        const { error: attemptError } = await supabase
-            .from('quiz_attempts')
+        const { error: attemptError } = await (supabase
+            .from('quiz_attempts') as any)
             .insert({
                 user_id: user.id,
                 quiz_id: quizId,
@@ -100,8 +100,8 @@ export async function POST(
         const newXP = user.xp + xpEarned;
         const newLevel = Math.floor(Math.sqrt(newXP / 100)) + 1;
 
-        const { error: xpError } = await supabase
-            .from('users')
+        const { error: xpError } = await (supabase
+            .from('users') as any)
             .update({ xp: newXP, level: newLevel })
             .eq('id', user.id);
 
@@ -110,7 +110,7 @@ export async function POST(
         }
 
         // Log activity
-        await supabase.from('activities').insert({
+        await (supabase.from('activities') as any).insert({
             user_id: user.id,
             type: 'quiz',
             title: `${passed ? 'Passed' : 'Completed'} ${quiz.title}`,
@@ -159,8 +159,8 @@ export async function POST(
                     case 'streak': eligible = streak >= badge.criteria_value; break;
                 }
                 if (eligible) {
-                    const { error: insertErr } = await supabase
-                        .from('user_badges')
+                    const { error: insertErr } = await (supabase
+                        .from('user_badges') as any)
                         .insert({ user_id: user.id, badge_id: badge.id });
                     if (!insertErr) {
                         newBadges.push({ id: badge.id, name: badge.name, icon: badge.icon, description: badge.description });

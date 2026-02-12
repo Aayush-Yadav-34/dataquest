@@ -40,7 +40,7 @@ export async function GET(
                 )
             `)
             .eq('id', id)
-            .single();
+            .single() as any;
 
         if (error) {
             console.error('Error fetching quiz:', error);
@@ -99,7 +99,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
             .from('users')
             .select('role')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (user?.role !== 'admin') {
             return NextResponse.json(
@@ -118,8 +118,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         if (time_limit !== undefined) updateData.time_limit = time_limit;
         if (xp_reward !== undefined) updateData.xp_reward = xp_reward;
 
-        const { data: updatedQuiz, error: quizError } = await supabase
-            .from('quizzes')
+        const { data: updatedQuiz, error: quizError } = await (supabase
+            .from('quizzes') as any)
             .update(updateData)
             .eq('id', id)
             .select()
@@ -151,8 +151,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
                     explanation: q.explanation || '',
                 }));
 
-                const { error: questionsError } = await supabase
-                    .from('quiz_questions')
+                const { error: questionsError } = await (supabase
+                    .from('quiz_questions') as any)
                     .insert(questionsToInsert);
 
                 if (questionsError) {
@@ -195,7 +195,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
             .from('users')
             .select('role')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (user?.role !== 'admin') {
             return NextResponse.json(

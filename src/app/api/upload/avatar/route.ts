@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
             .from('users')
             .select('id, avatar_url')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (userError || !userData) {
             return NextResponse.json(
@@ -90,8 +90,8 @@ export async function POST(request: NextRequest) {
             .getPublicUrl(filePath);
 
         // Update user's avatar_url
-        const { error: updateError } = await supabase
-            .from('users')
+        const { error: updateError } = await (supabase
+            .from('users') as any)
             .update({ avatar_url: publicUrl })
             .eq('id', userData.id);
 

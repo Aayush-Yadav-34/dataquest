@@ -21,7 +21,7 @@ export async function POST() {
             .from('users')
             .select('role')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (userData?.role !== 'admin') {
             return NextResponse.json(
@@ -45,14 +45,14 @@ export async function POST() {
             .gt('weekly_xp', 0);
 
         // Archive the weekly results
-        await supabase.from('weekly_reset_history').insert({
+        await (supabase.from('weekly_reset_history') as any).insert({
             top_users: topUsers || [],
             total_participants: totalParticipants || 0,
         });
 
         // Reset all users' weekly_xp to 0
-        const { error: resetError } = await supabase
-            .from('users')
+        const { error: resetError } = await (supabase
+            .from('users') as any)
             .update({
                 weekly_xp: 0,
                 last_weekly_reset: new Date().toISOString()

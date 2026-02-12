@@ -476,7 +476,7 @@ function RegressionPlot() {
                         showlegend: true,
                         legend: { x: 0, y: 1 },
                         margin: { t: 50, r: 20, b: 50, l: 50 },
-                    }}
+                    } as any}
                     config={{ displayModeBar: false }}
                     style={{ width: '100%', height: 400 }}
                 />
@@ -563,7 +563,7 @@ function ClusteringPlot() {
                     yaxis: { title: 'Feature 2', gridcolor: '#27272a' },
                     showlegend: true,
                     margin: { t: 50, r: 20, b: 50, l: 50 },
-                }}
+                } as any}
                 config={{ displayModeBar: false }}
                 style={{ width: '100%', height: 400 }}
             />
@@ -611,7 +611,7 @@ function PCAPlot() {
                     yaxis: { title: 'Principal Component 2', gridcolor: '#27272a' },
                     showlegend: true,
                     margin: { t: 50, r: 20, b: 50, l: 50 },
-                }}
+                } as any}
                 config={{ displayModeBar: false }}
                 style={{ width: '100%', height: 400 }}
             />

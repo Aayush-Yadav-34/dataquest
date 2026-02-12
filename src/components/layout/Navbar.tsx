@@ -15,7 +15,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Progress } from '@/components/ui/progress';
 import {
     Zap,
@@ -267,6 +267,7 @@ export function Navbar() {
                                         </Button>
                                     </SheetTrigger>
                                     <SheetContent side="right" className="w-80">
+                                        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                                         <div className="flex flex-col h-full">
                                             {/* User Info */}
                                             <div className="flex items-center gap-3 pb-6 border-b">

@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             .from('topics')
             .select('*')
             .eq('id', id)
-            .single();
+            .single() as any;
 
         if (error || !topic) {
             return NextResponse.json(
@@ -55,7 +55,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
             .from('users')
             .select('role')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (user?.role !== 'admin') {
             return NextResponse.json(
@@ -79,8 +79,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         if (order_index !== undefined) updateData.order_index = order_index;
         if (locked !== undefined) updateData.locked = locked;
 
-        const { data: updatedTopic, error } = await supabase
-            .from('topics')
+        const { data: updatedTopic, error } = await (supabase
+            .from('topics') as any)
             .update(updateData)
             .eq('id', id)
             .select()
@@ -124,7 +124,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
             .from('users')
             .select('role')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (user?.role !== 'admin') {
             return NextResponse.json(

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
             .from('users')
             .select('id')
             .eq('email', email)
-            .single();
+            .single() as any;
 
         if (existingEmail) {
             return NextResponse.json(
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
             .from('users')
             .select('id')
             .eq('username', username)
-            .single();
+            .single() as any;
 
         if (existingUsername) {
             return NextResponse.json(
@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
         const passwordHash = await bcrypt.hash(password, 12);
 
         // Create user
-        const { data: newUser, error } = await supabase
-            .from('users')
+        const { data: newUser, error } = await (supabase
+            .from('users') as any)
             .insert({
                 email,
                 username,

@@ -32,7 +32,7 @@ export async function GET() {
             .from('users')
             .select('role')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (userData?.role !== 'admin') {
             return NextResponse.json(
@@ -94,7 +94,7 @@ export async function PUT(request: NextRequest) {
             .from('users')
             .select('id, role')
             .eq('email', session.user.email)
-            .single();
+            .single() as any;
 
         if (userData?.role !== 'admin') {
             return NextResponse.json(
@@ -117,8 +117,8 @@ export async function PUT(request: NextRequest) {
         const updates = Object.entries(settings).map(async ([key, value]) => {
             const stringValue = typeof value === 'boolean' ? value.toString() : String(value);
 
-            const { error } = await supabase
-                .from('app_settings')
+            const { error } = await (supabase
+                .from('app_settings') as any)
                 .upsert({
                     key,
                     value: stringValue,
