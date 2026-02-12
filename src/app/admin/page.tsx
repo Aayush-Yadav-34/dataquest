@@ -917,14 +917,22 @@ export default function AdminPage() {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleToggleStatus(topic.id, topic.status)}
-                                                            className="border-none bg-transparent p-0 cursor-pointer"
+                                                            title={topic.status === 'published' ? 'Click to unpublish' : 'Click to publish'}
+                                                            className={cn(
+                                                                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
+                                                                'transition-all duration-200 cursor-pointer border',
+                                                                'hover:scale-105 hover:shadow-md active:scale-95',
+                                                                topic.status === 'published'
+                                                                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25 hover:border-emerald-500/50'
+                                                                    : 'bg-amber-500/15 text-amber-400 border-amber-500/30 hover:bg-amber-500/25 hover:border-amber-500/50'
+                                                            )}
                                                         >
-                                                            <Badge
-                                                                variant={topic.status === 'published' ? 'default' : 'secondary'}
-                                                                className="hover:opacity-80"
-                                                            >
-                                                                {topic.status}
-                                                            </Badge>
+                                                            {topic.status === 'published' ? (
+                                                                <CheckCircle className="w-3.5 h-3.5" />
+                                                            ) : (
+                                                                <Ban className="w-3.5 h-3.5" />
+                                                            )}
+                                                            {topic.status === 'published' ? 'Published' : 'Draft'}
                                                         </button>
                                                     </TableCell>
                                                     <TableCell>{topic.questionsCount}</TableCell>
