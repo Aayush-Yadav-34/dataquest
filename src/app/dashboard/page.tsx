@@ -129,7 +129,7 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-background">
             <Navbar />
 
-            <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
                 {/* Welcome Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="glass-card p-6 mb-8"
+                    className="glass-card p-4 sm:p-6 mb-8"
                 >
                     <div className="flex items-center gap-3 sm:gap-4 mb-4">
                         <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-primary flex items-center justify-center text-xl sm:text-2xl font-bold text-white glow">
@@ -218,7 +218,7 @@ export default function DashboardPage() {
                     />
                 </div>
 
-                <div className="grid lg:grid-cols-3 gap-8">
+                <div className="grid lg:grid-cols-3 gap-6 sm:gap-8 overflow-hidden">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-8">
                         {/* Continue Learning */}
@@ -244,8 +244,8 @@ export default function DashboardPage() {
                                         transition={{ delay: 0.3 + index * 0.1 }}
                                     >
                                         <Link href={`/theory/${topic.id}`}>
-                                            <div className="group glass-card p-4 flex items-center gap-4 hover:border-primary/50 transition-all cursor-pointer">
-                                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-2xl">
+                                            <div className="group glass-card p-3 sm:p-4 flex items-center gap-3 sm:gap-4 hover:border-primary/50 transition-all cursor-pointer">
+                                                <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg sm:text-2xl flex-shrink-0">
                                                     {topic.icon}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -272,7 +272,7 @@ export default function DashboardPage() {
 
                             {/* Big CTA Button */}
                             <Link href={continueTopics.length > 0 ? `/theory/${continueTopics[0].id}` : '/theory'}>
-                                <Button className="w-full mt-4 h-14 text-lg bg-gradient-primary hover:opacity-90 glow">
+                                <Button className="w-full mt-4 h-12 sm:h-14 text-base sm:text-lg bg-gradient-primary hover:opacity-90 glow">
                                     <Zap className="w-5 h-5 mr-2" />
                                     Continue Learning
                                     <ArrowRight className="w-5 h-5 ml-2" />
@@ -290,12 +290,12 @@ export default function DashboardPage() {
                             <div className="grid sm:grid-cols-2 gap-4">
                                 {recommendedTopics.map((topic) => (
                                     <Link key={topic.id} href={`/theory/${topic.id}`}>
-                                        <div className="group glass-card p-6 hover:border-primary/50 transition-all cursor-pointer h-full">
+                                        <div className="group glass-card p-4 sm:p-6 hover:border-primary/50 transition-all cursor-pointer h-full overflow-hidden">
                                             <div className="flex items-start gap-4">
                                                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-xl flex-shrink-0">
                                                     {topic.icon}
                                                 </div>
-                                                <div>
+                                                <div className="min-w-0">
                                                     <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">
                                                         {topic.title}
                                                     </h3>
@@ -322,13 +322,13 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Sidebar */}
-                    <div className="space-y-6">
+                    <div className="space-y-6 min-w-0">
                         {/* Mini Leaderboard */}
                         <motion.section
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.5 }}
-                            className="glass-card p-6"
+                            className="glass-card p-4 sm:p-6"
                         >
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -400,7 +400,7 @@ export default function DashboardPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.6 }}
-                            className="glass-card p-6"
+                            className="glass-card p-4 sm:p-6"
                         >
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-lg font-semibold">Recent Badges</h2>
@@ -411,7 +411,7 @@ export default function DashboardPage() {
                                 </Link>
                             </div>
                             <BadgeGrid
-                                badges={earnedBadges.slice(0, 6).map(b => ({
+                                badges={earnedBadges.slice(0, 4).map(b => ({
                                     id: b.id,
                                     name: b.name,
                                     icon: b.icon,
@@ -431,7 +431,7 @@ export default function DashboardPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.7 }}
-                            className="glass-card p-6"
+                            className="glass-card p-4 sm:p-6"
                         >
                             <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
                             <div className="space-y-2">
