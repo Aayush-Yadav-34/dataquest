@@ -91,7 +91,7 @@ export default function ProgressPage() {
         <div className="min-h-screen bg-background">
             <Navbar />
 
-            <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-x-hidden">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -415,7 +415,7 @@ export default function ProgressPage() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {categoryProgress.map((cat, index) => (
                                     <motion.div
                                         key={cat.category}

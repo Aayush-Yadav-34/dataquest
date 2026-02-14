@@ -174,7 +174,7 @@ export default function TheoryTopicPage() {
         return (
             <div className="min-h-screen bg-background">
                 <Navbar />
-                <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+                <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto overflow-x-hidden">
                     <div className="text-center py-20">
                         <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
                         <h2 className="text-xl font-semibold mb-2">Content Coming Soon</h2>

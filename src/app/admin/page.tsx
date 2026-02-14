@@ -664,7 +664,7 @@ export default function AdminPage() {
             <div className="min-h-screen bg-background">
                 <Navbar />
 
-                <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-x-hidden">
                     {/* Header */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}

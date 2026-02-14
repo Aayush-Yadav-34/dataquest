@@ -273,7 +273,7 @@ export default function QuizPage() {
                 )}
             </AnimatePresence>
 
-            <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+            <main className="pt-20 pb-24 md:pb-12 px-3 sm:px-6 lg:px-8 max-w-4xl mx-auto overflow-x-hidden">
                 {/* Quiz Selection */}
                 {quizState === 'selection' && (
                     <motion.div
@@ -309,18 +309,18 @@ export default function QuizPage() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 whileHover={{ scale: 1.02 }}
                                                 onClick={() => startQuiz(quiz)}
-                                                className="glass-card p-6 cursor-pointer hover:border-primary/50 transition-all"
+                                                className="glass-card p-3 sm:p-6 cursor-pointer hover:border-primary/50 transition-all"
                                             >
-                                                <div className="flex items-start gap-4">
-                                                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-2xl flex-shrink-0">
+                                                <div className="flex items-start gap-3 sm:gap-4">
+                                                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg sm:text-2xl flex-shrink-0">
                                                         {quiz.topic?.icon || '❓'}
                                                     </div>
-                                                    <div className="flex-1">
+                                                    <div className="flex-1 min-w-0">
                                                         <h3 className="font-semibold mb-1">{quiz.title}</h3>
                                                         <p className="text-sm text-muted-foreground mb-3">
                                                             {quiz.topic?.title || 'General Quiz'}
                                                         </p>
-                                                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                                                             <span className="flex items-center gap-1">
                                                                 <Target className="w-4 h-4" />
                                                                 {quiz.questionCount} questions
@@ -358,10 +358,10 @@ export default function QuizPage() {
                                     <motion.div
                                         whileHover={{ scale: 1.02 }}
                                         onClick={startChallengeMode}
-                                        className="glass-card p-6 cursor-pointer hover:border-yellow-500/50 transition-all bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/20"
+                                        className="glass-card p-3 sm:p-6 cursor-pointer hover:border-yellow-500/50 transition-all bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/20"
                                     >
-                                        <div className="flex items-start gap-4">
-                                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-2xl flex-shrink-0">
+                                        <div className="flex items-start gap-3 sm:gap-4">
+                                            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-lg sm:text-2xl flex-shrink-0">
                                                 🏆
                                             </div>
                                             <div className="flex-1">
@@ -369,7 +369,7 @@ export default function QuizPage() {
                                                 <p className="text-sm text-muted-foreground mb-3">
                                                     Random questions from all topics!
                                                 </p>
-                                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                                <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                                                     <span className="flex items-center gap-1">
                                                         <Target className="w-4 h-4" />
                                                         5 random questions

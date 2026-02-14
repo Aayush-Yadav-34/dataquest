@@ -129,7 +129,7 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-background">
             <Navbar />
 
-            <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
+            <main className="pt-20 pb-24 md:pb-12 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-x-hidden">
                 {/* Welcome Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -220,7 +220,7 @@ export default function DashboardPage() {
 
                 <div className="grid lg:grid-cols-3 gap-6 sm:gap-8 overflow-hidden">
                     {/* Main Content */}
-                    <div className="lg:col-span-2 space-y-8">
+                    <div className="lg:col-span-2 space-y-8 min-w-0">
                         {/* Continue Learning */}
                         <motion.section
                             initial={{ opacity: 0, y: 20 }}
@@ -290,9 +290,9 @@ export default function DashboardPage() {
                             <div className="grid sm:grid-cols-2 gap-4">
                                 {recommendedTopics.map((topic) => (
                                     <Link key={topic.id} href={`/theory/${topic.id}`}>
-                                        <div className="group glass-card p-4 sm:p-6 hover:border-primary/50 transition-all cursor-pointer h-full overflow-hidden">
-                                            <div className="flex items-start gap-4">
-                                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-xl flex-shrink-0">
+                                        <div className="group glass-card p-3 sm:p-6 hover:border-primary/50 transition-all cursor-pointer h-full overflow-hidden">
+                                            <div className="flex items-start gap-3 sm:gap-4">
+                                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg sm:text-xl flex-shrink-0">
                                                     {topic.icon}
                                                 </div>
                                                 <div className="min-w-0">
