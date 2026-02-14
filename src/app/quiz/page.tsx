@@ -273,7 +273,7 @@ export default function QuizPage() {
                 )}
             </AnimatePresence>
 
-            <main className="pt-20 pb-24 md:pb-12 px-3 sm:px-6 lg:px-8 max-w-4xl mx-auto overflow-x-hidden">
+            <main className="pt-20 pb-24 md:pb-12 px-2 sm:px-6 lg:px-8 max-w-4xl mx-auto overflow-x-hidden">
                 {/* Quiz Selection */}
                 {quizState === 'selection' && (
                     <motion.div
@@ -579,7 +579,7 @@ function QuestionCard({ question, selectedAnswer, showExplanation, onSelectAnswe
 
     return (
         <Card className="overflow-hidden">
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="p-2 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Difficulty Badge */}
                 <span className={cn(
                     "inline-block text-xs px-2 py-1 rounded-full",
@@ -591,7 +591,7 @@ function QuestionCard({ question, selectedAnswer, showExplanation, onSelectAnswe
                 </span>
 
                 {/* Question */}
-                <h3 className="text-xl font-semibold">{question.question}</h3>
+                <h3 className="text-base sm:text-xl font-semibold">{question.question}</h3>
 
                 {/* Options */}
                 <div className="space-y-3">
@@ -607,7 +607,7 @@ function QuestionCard({ question, selectedAnswer, showExplanation, onSelectAnswe
                                 onClick={() => onSelectAnswer(index)}
                                 disabled={showExplanation}
                                 className={cn(
-                                    "w-full p-4 rounded-xl border-2 text-left transition-all flex items-center gap-3",
+                                    "w-full p-2.5 sm:p-4 rounded-xl border-2 text-left transition-all flex items-center gap-2 sm:gap-3",
                                     !showExplanation && "hover:border-primary/50 cursor-pointer",
                                     showExplanation && isCorrectAnswer && "border-emerald-500 bg-emerald-500/10",
                                     showExplanation && isSelected && !isCorrectAnswer && "border-red-500 bg-red-500/10",
@@ -616,21 +616,21 @@ function QuestionCard({ question, selectedAnswer, showExplanation, onSelectAnswe
                                 )}
                             >
                                 <div className={cn(
-                                    "w-8 h-8 rounded-full flex items-center justify-center font-semibold flex-shrink-0",
+                                    "w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold flex-shrink-0",
                                     showExplanation && isCorrectAnswer && "bg-emerald-500 text-white",
                                     showExplanation && isSelected && !isCorrectAnswer && "bg-red-500 text-white",
                                     !showExplanation && isSelected && "bg-primary text-white",
                                     ((!showExplanation && !isSelected) || (showExplanation && !isCorrectAnswer && !isSelected)) && "bg-muted",
                                 )}>
                                     {showExplanation && isCorrectAnswer ? (
-                                        <CheckCircle className="w-5 h-5" />
+                                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                                     ) : showExplanation && isSelected && !isCorrectAnswer ? (
-                                        <XCircle className="w-5 h-5" />
+                                        <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                                     ) : (
                                         String.fromCharCode(65 + index)
                                     )}
                                 </div>
-                                <span className="flex-1">{option}</span>
+                                <span className="flex-1 text-sm sm:text-base">{option}</span>
                             </motion.button>
                         );
                     })}

@@ -174,7 +174,7 @@ export default function TheoryTopicPage() {
         return (
             <div className="min-h-screen bg-background">
                 <Navbar />
-                <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto overflow-x-hidden">
+                <main className="pt-20 pb-24 md:pb-12 px-2 sm:px-6 lg:px-8 max-w-4xl mx-auto overflow-x-hidden">
                     <div className="text-center py-20">
                         <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
                         <h2 className="text-xl font-semibold mb-2">Content Coming Soon</h2>
@@ -241,7 +241,7 @@ export default function TheoryTopicPage() {
                 )}
             </AnimatePresence>
 
-            <main className="pt-20 pb-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+            <main className="pt-20 pb-12 px-2 sm:px-6 lg:px-8 max-w-4xl mx-auto">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -298,12 +298,12 @@ export default function TheoryTopicPage() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    className="glass-card p-8 mb-8"
+                    className="glass-card p-3 sm:p-8 mb-8"
                 >
-                    <h2 className="text-xl font-semibold mb-6">{currentSection.title}</h2>
+                    <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">{currentSection.title}</h2>
 
                     {/* Content */}
-                    <div className="prose prose-invert max-w-none">
+                    <div className="prose prose-invert prose-sm sm:prose-base max-w-none">
                         <MarkdownContent content={currentSection.content} />
                     </div>
 
@@ -311,8 +311,8 @@ export default function TheoryTopicPage() {
                     {currentSection.code && (
                         <div className="mt-6">
                             <h3 className="text-lg font-semibold mb-3">Code Example</h3>
-                            <pre className="bg-muted/50 rounded-lg p-4 overflow-x-auto">
-                                <code className="text-sm text-muted-foreground whitespace-pre">
+                            <pre className="bg-muted/50 rounded-lg p-2 sm:p-4 overflow-x-auto">
+                                <code className="text-xs sm:text-sm text-muted-foreground whitespace-pre">
                                     {currentSection.code}
                                 </code>
                             </pre>
