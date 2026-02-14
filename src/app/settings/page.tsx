@@ -101,6 +101,25 @@ export default function SettingsPage() {
     }
 
     const handleSaveProfile = async () => {
+        // Validate username
+        const trimmed = username.trim();
+        if (!trimmed) {
+            toast.error('Username cannot be empty');
+            return;
+        }
+        if (trimmed.length < 3 || trimmed.length > 30) {
+            toast.error('Username must be between 3 and 30 characters');
+            return;
+        }
+        if (/[^\x20-\x7E]/.test(trimmed)) {
+            toast.error('Username cannot contain emojis or special Unicode characters');
+            return;
+        }
+        if (!/^[a-zA-Z0-9_.\-]+$/.test(trimmed)) {
+            toast.error('Username can only contain letters, numbers, underscores, hyphens, and dots');
+            return;
+        }
+
         setIsSaving(true);
 
         try {

@@ -208,7 +208,7 @@ export function Navbar() {
                                             </Avatar>
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="w-56" align="end">
+                                    <DropdownMenuContent className="w-56 border-white/10" align="end" style={{ background: 'rgba(10, 10, 25, 0.30)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
                                         <DropdownMenuLabel>
                                             <div className="flex flex-col space-y-1">
                                                 <p className="text-sm font-medium">{user.username}</p>
@@ -266,11 +266,11 @@ export function Navbar() {
                                             <Menu className="h-6 w-6" />
                                         </Button>
                                     </SheetTrigger>
-                                    <SheetContent side="right" className="w-80">
+                                    <SheetContent side="right" className="w-80 border-l border-white/10 shadow-2xl" style={{ background: 'rgba(10, 10, 25, 0.30)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
                                         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                                         <div className="flex flex-col h-full">
                                             {/* User Info */}
-                                            <div className="flex items-center gap-3 pb-6 border-b">
+                                            <div className="flex items-center gap-3 pb-6 border-b border-white/10">
                                                 <Avatar className="h-12 w-12 border-2 border-primary/50">
                                                     <AvatarImage src={user.avatar} />
                                                     <AvatarFallback className="bg-gradient-primary text-white">
@@ -284,7 +284,7 @@ export function Navbar() {
                                             </div>
 
                                             {/* Stats */}
-                                            <div className="flex gap-4 py-4 border-b">
+                                            <div className="flex gap-4 py-4 border-b border-white/10">
                                                 <div className="flex items-center gap-2 text-primary">
                                                     <Zap className="w-4 h-4" />
                                                     <span className="font-semibold">{user.xp.toLocaleString()}</span>
@@ -340,7 +340,7 @@ export function Navbar() {
                                             </nav>
 
                                             {/* Logout */}
-                                            <div className="pt-4 border-t">
+                                            <div className="pt-4 border-t border-white/10">
                                                 <Button
                                                     variant="ghost"
                                                     className="w-full justify-start text-destructive hover:text-destructive"
