@@ -236,7 +236,8 @@ export default function ProfilePage() {
                                                     earnedAt: b.earned_at ? new Date(b.earned_at) : undefined,
                                                 }))}
                                                 size="lg"
-                                                className="gap-6"
+                                                className="grid-cols-4 sm:grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-3 sm:gap-6"
+                                                badgeClassName="w-16 h-16 text-2xl sm:w-20 sm:h-20 sm:text-3xl"
                                             />
                                         ) : (
                                             <p className="text-muted-foreground text-sm py-4">Complete quizzes and topics to earn badges!</p>
@@ -257,7 +258,8 @@ export default function ProfilePage() {
                                                 locked: true,
                                             }))}
                                             size="lg"
-                                            className="gap-6"
+                                            className="grid-cols-4 sm:grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-3 sm:gap-6"
+                                            badgeClassName="w-16 h-16 text-2xl sm:w-20 sm:h-20 sm:text-3xl"
                                         />
                                     </div>
                                 </>

@@ -420,6 +420,7 @@ export default function DashboardPage() {
                                     earnedAt: b.earned_at ? new Date(b.earned_at) : undefined,
                                 }))}
                                 size="md"
+                                className="grid-cols-4"
                             />
                             {earnedBadges.length === 0 && !badgesLoading && (
                                 <p className="text-sm text-muted-foreground">No badges earned yet. Keep learning!</p>

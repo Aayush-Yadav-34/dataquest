@@ -104,11 +104,13 @@ interface BadgeGridProps {
     }[];
     size?: 'sm' | 'md' | 'lg';
     className?: string;
+    badgeClassName?: string;
 }
 
-export function BadgeGrid({ badges, size = 'md', className }: BadgeGridProps) {
+export function BadgeGrid({ badges, size = 'md', className, badgeClassName }: BadgeGridProps) {
+    const hasGridCols = className?.includes('grid-cols');
     return (
-        <div className={cn('grid gap-4', className)} style={{
+        <div className={cn('grid gap-4', className)} style={hasGridCols ? undefined : {
             gridTemplateColumns: `repeat(auto-fill, minmax(${size === 'sm' ? '48px' : size === 'md' ? '64px' : '80px'}, 1fr))`,
         }}>
             {badges.map((badge, index) => (
@@ -125,6 +127,7 @@ export function BadgeGrid({ badges, size = 'md', className }: BadgeGridProps) {
                         locked={badge.locked}
                         earnedAt={badge.earnedAt}
                         size={size}
+                        className={badgeClassName}
                     />
                 </motion.div>
             ))}

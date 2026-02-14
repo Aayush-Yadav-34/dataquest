@@ -456,7 +456,7 @@ export default function QuizPage() {
                                     >
                                         <Button
                                             onClick={handleNextQuestion}
-                                            className="w-full h-14 text-lg bg-gradient-primary hover:opacity-90"
+                                            className="w-full h-12 sm:h-14 text-sm sm:text-base bg-gradient-primary hover:opacity-90 rounded-xl shadow-lg shadow-primary/20"
                                         >
                                             {currentQuestionIndex < totalQuestions - 1 ? (
                                                 <>Next Question <ArrowRight className="w-5 h-5 ml-2" /></>
