@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { signIn, useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { useUserStore } from '@/store/userStore';
 
 export default function LoginPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { status } = useSession();
     const { isAuthenticated: storeAuth } = useUserStore();
     const [email, setEmail] = useState('');
@@ -26,6 +27,13 @@ export default function LoginPage() {
 
     // Combined auth check
     const isAuthenticated = status === 'authenticated' || storeAuth;
+
+    // Check for blocked param from OAuth redirect
+    useEffect(() => {
+        if (searchParams.get('blocked') === 'true') {
+            setShowBlockedModal(true);
+        }
+    }, [searchParams]);
 
     // Redirect if already authenticated
     useEffect(() => {

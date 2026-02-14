@@ -1,7 +1,10 @@
 'use client';
 
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/layout/Navbar';
 import {
@@ -54,6 +57,16 @@ const stats = [
 ];
 
 export default function LandingPage() {
+  const router = useRouter();
+  const { status } = useSession();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/dashboard');
+    }
+  }, [status, router]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

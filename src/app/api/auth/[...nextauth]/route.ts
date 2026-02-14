@@ -93,7 +93,8 @@ export const authOptions: NextAuthOptions = {
 
                 if (userData?.blocked) {
                     console.log('Blocked user attempted login:', user.email);
-                    return false; // Deny login for blocked users
+                    // Redirect to login page with blocked param to show the nice modal
+                    return '/login?blocked=true';
                 }
             }
 
