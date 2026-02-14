@@ -80,15 +80,6 @@ export default function ProfilePage() {
         streak: userData?.streak ?? profile.streak,
     } : null;
 
-    // Show loading or redirect if not authenticated
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-background flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-
     // Redirect to login if not authenticated
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
@@ -96,7 +87,8 @@ export default function ProfilePage() {
         }
     }, [isLoading, isAuthenticated, router]);
 
-    if (!isAuthenticated || !user) {
+    // Show loading or redirect if not authenticated
+    if (isLoading || !isAuthenticated || !user) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
