@@ -93,8 +93,12 @@ export const authOptions: NextAuthOptions = {
 
                 if (userData?.blocked) {
                     console.log('Blocked user attempted login:', user.email);
-                    // Redirect to login page with blocked param to show the nice modal
-                    return '/login?blocked=true';
+                    if (account?.provider === 'google') {
+                        // OAuth: redirect to login page with blocked param
+                        return '/login?blocked=true';
+                    }
+                    // Credentials: return false → client catches as AccessDenied
+                    return false;
                 }
             }
 
