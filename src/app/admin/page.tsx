@@ -664,7 +664,7 @@ export default function AdminPage() {
             <div className="min-h-screen bg-background">
                 <Navbar />
 
-                <main className="pt-20 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                     {/* Header */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -672,8 +672,8 @@ export default function AdminPage() {
                         className="mb-8"
                     >
                         <div className="flex items-center gap-3 mb-2">
-                            <Shield className="w-8 h-8 text-amber-500" />
-                            <h1 className="text-3xl font-bold">
+                            <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500" />
+                            <h1 className="text-2xl sm:text-3xl font-bold">
                                 <span className="text-gradient">Admin Panel</span>
                             </h1>
                         </div>
@@ -687,13 +687,13 @@ export default function AdminPage() {
                     </motion.div>
 
                     {/* Stats Overview */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-8">
                         <Card>
                             <CardContent className="pt-6">
-                                <div className="flex items-center gap-3">
-                                    <BookOpen className="w-8 h-8 text-primary" />
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                                     <div>
-                                        <p className="text-2xl font-bold">{stats.totalTopics}</p>
+                                        <p className="text-xl sm:text-2xl font-bold">{stats.totalTopics}</p>
                                         <p className="text-xs text-muted-foreground">Total Topics</p>
                                     </div>
                                 </div>
@@ -701,10 +701,10 @@ export default function AdminPage() {
                         </Card>
                         <Card>
                             <CardContent className="pt-6">
-                                <div className="flex items-center gap-3">
-                                    <CheckCircle className="w-8 h-8 text-emerald-500" />
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-500" />
                                     <div>
-                                        <p className="text-2xl font-bold">{stats.publishedTopics}</p>
+                                        <p className="text-xl sm:text-2xl font-bold">{stats.publishedTopics}</p>
                                         <p className="text-xs text-muted-foreground">Published</p>
                                     </div>
                                 </div>
@@ -712,10 +712,10 @@ export default function AdminPage() {
                         </Card>
                         <Card>
                             <CardContent className="pt-6">
-                                <div className="flex items-center gap-3">
-                                    <Brain className="w-8 h-8 text-accent" />
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <Brain className="w-6 h-6 sm:w-8 sm:h-8 text-accent" />
                                     <div>
-                                        <p className="text-2xl font-bold">{stats.totalQuizzes}</p>
+                                        <p className="text-xl sm:text-2xl font-bold">{stats.totalQuizzes}</p>
                                         <p className="text-xs text-muted-foreground">Quizzes</p>
                                     </div>
                                 </div>
@@ -723,10 +723,10 @@ export default function AdminPage() {
                         </Card>
                         <Card>
                             <CardContent className="pt-6">
-                                <div className="flex items-center gap-3">
-                                    <Users className="w-8 h-8 text-amber-500" />
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <Users className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500" />
                                     <div>
-                                        <p className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</p>
+                                        <p className="text-xl sm:text-2xl font-bold">{stats.totalUsers.toLocaleString()}</p>
                                         <p className="text-xs text-muted-foreground">Total Users</p>
                                     </div>
                                 </div>
@@ -734,10 +734,10 @@ export default function AdminPage() {
                         </Card>
                         <Card>
                             <CardContent className="pt-6">
-                                <div className="flex items-center gap-3">
-                                    <BarChart3 className="w-8 h-8 text-emerald-500" />
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-500" />
                                     <div>
-                                        <p className="text-2xl font-bold">{stats.activeToday}</p>
+                                        <p className="text-xl sm:text-2xl font-bold">{stats.activeToday}</p>
                                         <p className="text-xs text-muted-foreground">Active Today</p>
                                     </div>
                                 </div>
@@ -747,28 +747,30 @@ export default function AdminPage() {
 
                     {/* Tabs */}
                     <Tabs defaultValue="topics" className="space-y-6">
-                        <TabsList>
-                            <TabsTrigger value="topics">
-                                <BookOpen className="w-4 h-4 mr-2" />
-                                Topics
-                            </TabsTrigger>
-                            <TabsTrigger value="quizzes">
-                                <Brain className="w-4 h-4 mr-2" />
-                                Quizzes
-                            </TabsTrigger>
-                            <TabsTrigger value="leaderboard">
-                                <Trophy className="w-4 h-4 mr-2" />
-                                Leaderboard
-                            </TabsTrigger>
-                            <TabsTrigger value="settings">
-                                <Settings className="w-4 h-4 mr-2" />
-                                Settings
-                            </TabsTrigger>
-                            <TabsTrigger value="users">
-                                <Users className="w-4 h-4 mr-2" />
-                                Users
-                            </TabsTrigger>
-                        </TabsList>
+                        <div className="overflow-x-auto -mx-4 px-4 pb-1">
+                            <TabsList className="w-max">
+                                <TabsTrigger value="topics" className="flex-none">
+                                    <BookOpen className="w-4 h-4 mr-2" />
+                                    Topics
+                                </TabsTrigger>
+                                <TabsTrigger value="quizzes" className="flex-none">
+                                    <Brain className="w-4 h-4 mr-2" />
+                                    Quizzes
+                                </TabsTrigger>
+                                <TabsTrigger value="leaderboard" className="flex-none">
+                                    <Trophy className="w-4 h-4 mr-2" />
+                                    Leaderboard
+                                </TabsTrigger>
+                                <TabsTrigger value="settings" className="flex-none">
+                                    <Settings className="w-4 h-4 mr-2" />
+                                    Settings
+                                </TabsTrigger>
+                                <TabsTrigger value="users" className="flex-none">
+                                    <Users className="w-4 h-4 mr-2" />
+                                    Users
+                                </TabsTrigger>
+                            </TabsList>
+                        </div>
 
                         {/* Topics Tab */}
                         <TabsContent value="topics">
@@ -781,7 +783,7 @@ export default function AdminPage() {
                                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                                 <Input
                                                     placeholder="Search topics..."
-                                                    className="pl-9 w-64"
+                                                    className="pl-9 w-full sm:w-64"
                                                     value={searchQuery}
                                                     onChange={(e) => setSearchQuery(e.target.value)}
                                                 />
@@ -886,8 +888,8 @@ export default function AdminPage() {
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent>
-                                    <Table>
+                                <CardContent className="overflow-x-auto">
+                                    <Table className="min-w-[700px]">
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Topic</TableHead>
@@ -980,7 +982,7 @@ export default function AdminPage() {
                         <TabsContent value="quizzes">
                             <Card>
                                 <CardHeader>
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                         <CardTitle>Quiz Management</CardTitle>
                                         <Dialog open={isAddQuizOpen} onOpenChange={setIsAddQuizOpen}>
                                             <DialogTrigger asChild>
@@ -1057,8 +1059,8 @@ export default function AdminPage() {
                                         </Dialog>
                                     </div>
                                 </CardHeader>
-                                <CardContent>
-                                    <Table>
+                                <CardContent className="overflow-x-auto">
+                                    <Table className="min-w-[700px]">
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Quiz</TableHead>
@@ -1341,14 +1343,14 @@ export default function AdminPage() {
                         <TabsContent value="users">
                             <Card>
                                 <CardHeader>
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                         <CardTitle>User Management</CardTitle>
                                         <div className="flex items-center gap-2">
                                             <div className="relative">
                                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                                 <Input
                                                     placeholder="Search users..."
-                                                    className="pl-9 w-64"
+                                                    className="pl-9 w-full sm:w-64"
                                                     value={userSearch}
                                                     onChange={(e) => setUserSearch(e.target.value)}
                                                 />
@@ -1383,123 +1385,125 @@ export default function AdminPage() {
                                             <p className="text-muted-foreground">No users found. Click refresh to load users.</p>
                                         </div>
                                     ) : (
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>User</TableHead>
-                                                    <TableHead>Role</TableHead>
-                                                    <TableHead>XP</TableHead>
-                                                    <TableHead>Level</TableHead>
-                                                    <TableHead>Status</TableHead>
-                                                    <TableHead className="text-right">Actions</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {usersList.map((user) => (
-                                                    <TableRow key={user.id}>
-                                                        <TableCell>
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium">
-                                                                    {user.username?.charAt(0).toUpperCase() || '?'}
-                                                                </div>
-                                                                <div>
-                                                                    <p className="font-medium">{user.username}</p>
-                                                                    <p className="text-xs text-muted-foreground">{user.email}</p>
-                                                                </div>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <span className={cn(
-                                                                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border',
-                                                                user.role === 'admin'
-                                                                    ? 'bg-purple-500/15 text-purple-400 border-purple-500/30'
-                                                                    : 'bg-slate-500/15 text-slate-400 border-slate-500/30'
-                                                            )}>
-                                                                {user.role === 'admin' ? (
-                                                                    <Shield className="w-3.5 h-3.5" />
-                                                                ) : (
-                                                                    <UserCheck className="w-3.5 h-3.5" />
-                                                                )}
-                                                                {user.role}
-                                                            </span>
-                                                        </TableCell>
-                                                        <TableCell>{user.xp.toLocaleString()}</TableCell>
-                                                        <TableCell>{user.level}</TableCell>
-                                                        <TableCell>
-                                                            <span className={cn(
-                                                                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border',
-                                                                'transition-all duration-200',
-                                                                user.blocked
-                                                                    ? 'bg-red-500/15 text-red-400 border-red-500/30'
-                                                                    : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                                                            )}>
-                                                                {user.blocked ? (
-                                                                    <Ban className="w-3.5 h-3.5" />
-                                                                ) : (
-                                                                    <CheckCircle className="w-3.5 h-3.5" />
-                                                                )}
-                                                                {user.blocked ? 'Blocked' : 'Active'}
-                                                            </span>
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            {user.role !== 'admin' && (
-                                                                <div className="flex justify-end gap-2">
-                                                                    <button
-                                                                        type="button"
-                                                                        title={user.blocked ? 'Click to unblock user' : 'Click to block user'}
-                                                                        className={cn(
-                                                                            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
-                                                                            'transition-all duration-200 cursor-pointer border',
-                                                                            'hover:scale-105 hover:shadow-md active:scale-95',
-                                                                            user.blocked
-                                                                                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25 hover:border-emerald-500/50'
-                                                                                : 'bg-amber-500/15 text-amber-400 border-amber-500/30 hover:bg-amber-500/25 hover:border-amber-500/50'
-                                                                        )}
-                                                                        onClick={async () => {
-                                                                            try {
-                                                                                const res = await fetch('/api/admin/users', {
-                                                                                    method: 'PATCH',
-                                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                                    body: JSON.stringify({ userId: user.id, blocked: !user.blocked })
-                                                                                });
-                                                                                if (res.ok) {
-                                                                                    toast.success(user.blocked ? 'User unblocked' : 'User blocked');
-                                                                                    setUsersList(prev => prev.map(u =>
-                                                                                        u.id === user.id ? { ...u, blocked: !u.blocked } : u
-                                                                                    ));
-                                                                                }
-                                                                            } catch (e) {
-                                                                                console.error(e);
-                                                                                toast.error('Failed to update user');
-                                                                            }
-                                                                        }}
-                                                                    >
-                                                                        {user.blocked ? (
-                                                                            <><UserCheck className="w-3.5 h-3.5" /> Unblock</>
-                                                                        ) : (
-                                                                            <><Ban className="w-3.5 h-3.5" /> Block</>
-                                                                        )}
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        title="Delete user"
-                                                                        className={cn(
-                                                                            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
-                                                                            'transition-all duration-200 cursor-pointer border',
-                                                                            'hover:scale-105 hover:shadow-md active:scale-95',
-                                                                            'bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/25 hover:border-red-500/50'
-                                                                        )}
-                                                                        onClick={() => setDeleteUserId(user.id)}
-                                                                    >
-                                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                                    </button>
-                                                                </div>
-                                                            )}
-                                                        </TableCell>
+                                        <div className="overflow-x-auto">
+                                            <Table className="min-w-[600px]">
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>User</TableHead>
+                                                        <TableHead>Role</TableHead>
+                                                        <TableHead>XP</TableHead>
+                                                        <TableHead>Level</TableHead>
+                                                        <TableHead>Status</TableHead>
+                                                        <TableHead className="text-right">Actions</TableHead>
                                                     </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {usersList.map((user) => (
+                                                        <TableRow key={user.id}>
+                                                            <TableCell>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium">
+                                                                        {user.username?.charAt(0).toUpperCase() || '?'}
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="font-medium">{user.username}</p>
+                                                                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <span className={cn(
+                                                                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border',
+                                                                    user.role === 'admin'
+                                                                        ? 'bg-purple-500/15 text-purple-400 border-purple-500/30'
+                                                                        : 'bg-slate-500/15 text-slate-400 border-slate-500/30'
+                                                                )}>
+                                                                    {user.role === 'admin' ? (
+                                                                        <Shield className="w-3.5 h-3.5" />
+                                                                    ) : (
+                                                                        <UserCheck className="w-3.5 h-3.5" />
+                                                                    )}
+                                                                    {user.role}
+                                                                </span>
+                                                            </TableCell>
+                                                            <TableCell>{user.xp.toLocaleString()}</TableCell>
+                                                            <TableCell>{user.level}</TableCell>
+                                                            <TableCell>
+                                                                <span className={cn(
+                                                                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border',
+                                                                    'transition-all duration-200',
+                                                                    user.blocked
+                                                                        ? 'bg-red-500/15 text-red-400 border-red-500/30'
+                                                                        : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                                                                )}>
+                                                                    {user.blocked ? (
+                                                                        <Ban className="w-3.5 h-3.5" />
+                                                                    ) : (
+                                                                        <CheckCircle className="w-3.5 h-3.5" />
+                                                                    )}
+                                                                    {user.blocked ? 'Blocked' : 'Active'}
+                                                                </span>
+                                                            </TableCell>
+                                                            <TableCell className="text-right">
+                                                                {user.role !== 'admin' && (
+                                                                    <div className="flex justify-end gap-2">
+                                                                        <button
+                                                                            type="button"
+                                                                            title={user.blocked ? 'Click to unblock user' : 'Click to block user'}
+                                                                            className={cn(
+                                                                                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
+                                                                                'transition-all duration-200 cursor-pointer border',
+                                                                                'hover:scale-105 hover:shadow-md active:scale-95',
+                                                                                user.blocked
+                                                                                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25 hover:border-emerald-500/50'
+                                                                                    : 'bg-amber-500/15 text-amber-400 border-amber-500/30 hover:bg-amber-500/25 hover:border-amber-500/50'
+                                                                            )}
+                                                                            onClick={async () => {
+                                                                                try {
+                                                                                    const res = await fetch('/api/admin/users', {
+                                                                                        method: 'PATCH',
+                                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                                        body: JSON.stringify({ userId: user.id, blocked: !user.blocked })
+                                                                                    });
+                                                                                    if (res.ok) {
+                                                                                        toast.success(user.blocked ? 'User unblocked' : 'User blocked');
+                                                                                        setUsersList(prev => prev.map(u =>
+                                                                                            u.id === user.id ? { ...u, blocked: !u.blocked } : u
+                                                                                        ));
+                                                                                    }
+                                                                                } catch (e) {
+                                                                                    console.error(e);
+                                                                                    toast.error('Failed to update user');
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            {user.blocked ? (
+                                                                                <><UserCheck className="w-3.5 h-3.5" /> Unblock</>
+                                                                            ) : (
+                                                                                <><Ban className="w-3.5 h-3.5" /> Block</>
+                                                                            )}
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            title="Delete user"
+                                                                            className={cn(
+                                                                                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
+                                                                                'transition-all duration-200 cursor-pointer border',
+                                                                                'hover:scale-105 hover:shadow-md active:scale-95',
+                                                                                'bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/25 hover:border-red-500/50'
+                                                                            )}
+                                                                            onClick={() => setDeleteUserId(user.id)}
+                                                                        >
+                                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
                                     )}
                                 </CardContent>
                             </Card>

@@ -273,7 +273,7 @@ export default function QuizPage() {
                 )}
             </AnimatePresence>
 
-            <main className="pt-20 pb-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+            <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
                 {/* Quiz Selection */}
                 {quizState === 'selection' && (
                     <motion.div
@@ -506,7 +506,7 @@ export default function QuizPage() {
                             </p>
 
                             {/* Stats Grid */}
-                            <div className="grid grid-cols-3 gap-4 mb-8">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-8">
                                 <div className="glass-card p-4">
                                     <div className="text-3xl font-bold text-primary">{results.accuracy.toFixed(0)}%</div>
                                     <p className="text-sm text-muted-foreground">Accuracy</p>

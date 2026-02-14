@@ -98,14 +98,14 @@ export default function LeaderboardPage() {
         <div className="min-h-screen bg-background">
             <Navbar />
 
-            <main className="pt-20 pb-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+            <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-8"
                 >
-                    <h1 className="text-3xl font-bold mb-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold mb-2">
                         <span className="text-gradient">Leaderboard</span>
                     </h1>
                     <p className="text-muted-foreground">
@@ -120,7 +120,7 @@ export default function LeaderboardPage() {
                     transition={{ delay: 0.1 }}
                     className="mb-8"
                 >
-                    <div className="flex items-end justify-center gap-4 h-64">
+                    <div className="flex items-end justify-center gap-2 sm:gap-4 h-56 sm:h-64">
                         {/* 2nd Place */}
                         <PodiumCard
                             entry={leaderboardData[1]}
@@ -249,58 +249,60 @@ export default function LeaderboardPage() {
                             animate={{ opacity: 1 }}
                             className="glass-card overflow-hidden"
                         >
-                            <div className="p-4 border-b border-border/50 grid grid-cols-12 text-sm font-medium text-muted-foreground">
-                                <div className="col-span-1">Rank</div>
-                                <div className="col-span-5">College</div>
-                                <div className="col-span-2 text-right">Students</div>
-                                <div className="col-span-2 text-right">Avg Level</div>
-                                <div className="col-span-2 text-right">Total XP</div>
-                            </div>
-                            <div className="divide-y divide-border/30">
-                                {collegeLeaderboard
-                                    .filter((e) =>
-                                        e.college.toLowerCase().includes(searchQuery.toLowerCase())
-                                    )
-                                    .map((entry, index) => (
-                                        <motion.div
-                                            key={entry.college}
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: index * 0.05 }}
-                                            className="p-4 grid grid-cols-12 items-center hover:bg-muted/30 transition-colors"
-                                        >
-                                            <div className="col-span-1 font-bold">
-                                                {entry.rank <= 3 ? (
-                                                    <span className={cn(
-                                                        entry.rank === 1 && "text-yellow-500",
-                                                        entry.rank === 2 && "text-gray-400",
-                                                        entry.rank === 3 && "text-amber-600",
-                                                    )}>
-                                                        {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-muted-foreground">{entry.rank}</span>
-                                                )}
-                                            </div>
-                                            <div className="col-span-5 flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                                                    <GraduationCap className="w-5 h-5 text-primary" />
+                            <div className="overflow-x-auto">
+                                <div className="p-4 border-b border-border/50 grid grid-cols-12 text-sm font-medium text-muted-foreground min-w-[500px]">
+                                    <div className="col-span-1">Rank</div>
+                                    <div className="col-span-5">College</div>
+                                    <div className="col-span-2 text-right">Students</div>
+                                    <div className="col-span-2 text-right">Avg Level</div>
+                                    <div className="col-span-2 text-right">Total XP</div>
+                                </div>
+                                <div className="divide-y divide-border/30 min-w-[500px]">
+                                    {collegeLeaderboard
+                                        .filter((e) =>
+                                            e.college.toLowerCase().includes(searchQuery.toLowerCase())
+                                        )
+                                        .map((entry, index) => (
+                                            <motion.div
+                                                key={entry.college}
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: index * 0.05 }}
+                                                className="p-4 grid grid-cols-12 items-center hover:bg-muted/30 transition-colors"
+                                            >
+                                                <div className="col-span-1 font-bold">
+                                                    {entry.rank <= 3 ? (
+                                                        <span className={cn(
+                                                            entry.rank === 1 && "text-yellow-500",
+                                                            entry.rank === 2 && "text-gray-400",
+                                                            entry.rank === 3 && "text-amber-600",
+                                                        )}>
+                                                            {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-muted-foreground">{entry.rank}</span>
+                                                    )}
                                                 </div>
-                                                <span className="font-medium">{entry.college}</span>
-                                            </div>
-                                            <div className="col-span-2 text-right text-muted-foreground">
-                                                {entry.students}
-                                            </div>
-                                            <div className="col-span-2 text-right">
-                                                <span className="inline-flex items-center gap-1 text-primary">
-                                                    Lv. {entry.avgLevel}
-                                                </span>
-                                            </div>
-                                            <div className="col-span-2 text-right font-semibold text-primary">
-                                                {entry.totalXp.toLocaleString()}
-                                            </div>
-                                        </motion.div>
-                                    ))}
+                                                <div className="col-span-5 flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                                                        <GraduationCap className="w-5 h-5 text-primary" />
+                                                    </div>
+                                                    <span className="font-medium">{entry.college}</span>
+                                                </div>
+                                                <div className="col-span-2 text-right text-muted-foreground">
+                                                    {entry.students}
+                                                </div>
+                                                <div className="col-span-2 text-right">
+                                                    <span className="inline-flex items-center gap-1 text-primary">
+                                                        Lv. {entry.avgLevel}
+                                                    </span>
+                                                </div>
+                                                <div className="col-span-2 text-right font-semibold text-primary">
+                                                    {entry.totalXp.toLocaleString()}
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                </div>
                             </div>
                         </motion.div>
                     </TabsContent>
@@ -364,7 +366,7 @@ function PodiumCard({ entry, position, height }: PodiumCardProps) {
 
             {/* Podium */}
             <div className={cn(
-                "w-24 rounded-t-lg flex flex-col items-center justify-start pt-4 bg-gradient-to-b",
+                "w-20 sm:w-24 rounded-t-lg flex flex-col items-center justify-start pt-3 sm:pt-4 bg-gradient-to-b",
                 colors[position],
                 height,
             )}>

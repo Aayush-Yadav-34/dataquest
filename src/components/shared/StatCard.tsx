@@ -48,7 +48,7 @@ export function StatCard({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
             className={cn(
-                'relative overflow-hidden rounded-2xl border p-6 transition-all hover:shadow-lg',
+                'relative overflow-hidden rounded-2xl border p-4 sm:p-6 transition-all hover:shadow-lg',
                 variantStyles[variant],
                 className
             )}
@@ -62,7 +62,7 @@ export function StatCard({
                 <div className="space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">{title}</p>
                     <div className="flex items-baseline gap-2">
-                        <h3 className="text-3xl font-bold tracking-tight">{value}</h3>
+                        <h3 className="text-2xl sm:text-3xl font-bold tracking-tight">{value}</h3>
                         {trend && (
                             <span
                                 className={cn(

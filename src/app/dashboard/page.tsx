@@ -129,7 +129,7 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-background">
             <Navbar />
 
-            <main className="pt-20 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <main className="pt-20 pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 {/* Welcome Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -138,7 +138,7 @@ export default function DashboardPage() {
                 >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold">
+                            <h1 className="text-2xl sm:text-3xl font-bold">
                                 Welcome back, <span className="text-gradient">{displayProfile.username}</span>! 👋
                             </h1>
                             <p className="text-muted-foreground mt-1">
@@ -165,8 +165,8 @@ export default function DashboardPage() {
                     transition={{ delay: 0.1 }}
                     className="glass-card p-6 mb-8"
                 >
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center text-2xl font-bold text-white glow">
+                    <div className="flex items-center gap-3 sm:gap-4 mb-4">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-primary flex items-center justify-center text-xl sm:text-2xl font-bold text-white glow">
                             {displayProfile.level}
                         </div>
                         <div className="flex-1">
@@ -185,7 +185,7 @@ export default function DashboardPage() {
                 </motion.div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
                     <StatCard
                         title="Topics Completed"
                         value={`${progressStats?.completedTopics || 0}/${progressStats?.totalTopics || topics.length}`}
