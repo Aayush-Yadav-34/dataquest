@@ -9,6 +9,7 @@ interface UserData {
     xp: number;
     level: number;
     streak: number;
+    role?: string;
     xpProgress: number;
     xpToNextLevel: number;
 }
@@ -54,6 +55,7 @@ export function useUserData(): UseUserDataReturn {
                 xp: data.xp,
                 level: data.level,
                 streak: data.streak,
+                role: data.role,
                 xpProgress: data.xpProgress,
                 xpToNextLevel: data.xpToNextLevel,
             });

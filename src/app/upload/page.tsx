@@ -422,8 +422,8 @@ export default function UploadPage() {
                                     </CardHeader>
                                     <CardContent>
                                         {/* Chart Type Selection */}
-                                        <div className="flex flex-wrap items-center gap-4 mb-6">
-                                            <div className="flex gap-2">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+                                            <div className="flex flex-wrap gap-2">
                                                 {[
                                                     { id: 'histogram', label: 'Histogram', icon: BarChart3 },
                                                     { id: 'boxplot', label: 'Box Plot', icon: TrendingUp },
@@ -437,53 +437,58 @@ export default function UploadPage() {
                                                         variant={activeChart === chart.id ? 'default' : 'outline'}
                                                         size="sm"
                                                         onClick={() => setActiveChart(chart.id as typeof activeChart)}
-                                                        className={activeChart === chart.id ? 'bg-gradient-primary' : ''}
+                                                        className={cn(
+                                                            "flex-1 sm:flex-none",
+                                                            activeChart === chart.id ? 'bg-gradient-primary' : ''
+                                                        )}
                                                     >
                                                         <chart.icon className="w-4 h-4 mr-1" />
-                                                        {chart.label}
+                                                        <span className="truncate">{chart.label}</span>
                                                     </Button>
                                                 ))}
                                             </div>
 
-                                            {/* Column Selectors */}
-                                            {(activeChart === 'histogram' || activeChart === 'boxplot') && (
-                                                <Select value={selectedColumn} onValueChange={setSelectedColumn}>
-                                                    <SelectTrigger className="w-40">
-                                                        <SelectValue placeholder="Select column" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {numericColumns.map((col) => (
-                                                            <SelectItem key={col} value={col}>{col}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            )}
+                                            <div className="flex items-center gap-2">
+                                                {/* Column Selectors */}
+                                                {(activeChart === 'histogram' || activeChart === 'boxplot') && (
+                                                    <Select value={selectedColumn} onValueChange={setSelectedColumn}>
+                                                        <SelectTrigger className="w-full sm:w-48">
+                                                            <SelectValue placeholder="Select column" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {numericColumns.map((col) => (
+                                                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                )}
 
-                                            {activeChart === 'scatter' && (
-                                                <>
-                                                    <Select value={selectedXColumn} onValueChange={setSelectedXColumn}>
-                                                        <SelectTrigger className="w-32">
-                                                            <SelectValue placeholder="X axis" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {numericColumns.map((col) => (
-                                                                <SelectItem key={col} value={col}>{col}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <span className="text-muted-foreground">vs</span>
-                                                    <Select value={selectedYColumn} onValueChange={setSelectedYColumn}>
-                                                        <SelectTrigger className="w-32">
-                                                            <SelectValue placeholder="Y axis" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {numericColumns.map((col) => (
-                                                                <SelectItem key={col} value={col}>{col}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </>
-                                            )}
+                                                {activeChart === 'scatter' && (
+                                                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                                                        <Select value={selectedXColumn} onValueChange={setSelectedXColumn}>
+                                                            <SelectTrigger className="w-[45%] sm:w-32">
+                                                                <SelectValue placeholder="X axis" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {numericColumns.map((col) => (
+                                                                    <SelectItem key={col} value={col}>{col}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <span className="text-muted-foreground text-xs">vs</span>
+                                                        <Select value={selectedYColumn} onValueChange={setSelectedYColumn}>
+                                                            <SelectTrigger className="w-[45%] sm:w-32">
+                                                                <SelectValue placeholder="Y axis" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {numericColumns.map((col) => (
+                                                                    <SelectItem key={col} value={col}>{col}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Charts */}
@@ -582,6 +587,7 @@ function HistogramChart({ data, column }: { data: DatasetRow[]; column: string }
 
     return (
         <Plot
+            useResizeHandler
             data={[
                 {
                     x: values,
@@ -592,6 +598,7 @@ function HistogramChart({ data, column }: { data: DatasetRow[]; column: string }
                 },
             ]}
             layout={{
+                autosize: true,
                 title: { text: `Distribution of ${column}`, font: { color: '#e5e5e5' } },
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'rgba(0,0,0,0.2)',
@@ -610,6 +617,7 @@ function BoxPlotChart({ data, column }: { data: DatasetRow[]; column: string }) 
 
     return (
         <Plot
+            useResizeHandler
             data={[
                 {
                     y: values,
@@ -620,6 +628,7 @@ function BoxPlotChart({ data, column }: { data: DatasetRow[]; column: string }) 
                 },
             ]}
             layout={{
+                autosize: true,
                 title: { text: `Box Plot of ${column}`, font: { color: '#e5e5e5' } },
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'rgba(0,0,0,0.2)',
@@ -638,6 +647,7 @@ function ScatterChart({ data, xColumn, yColumn }: { data: DatasetRow[]; xColumn:
 
     return (
         <Plot
+            useResizeHandler
             data={[
                 {
                     x: xValues,
@@ -652,6 +662,7 @@ function ScatterChart({ data, xColumn, yColumn }: { data: DatasetRow[]; xColumn:
                 },
             ]}
             layout={{
+                autosize: true,
                 title: { text: `${xColumn} vs ${yColumn}`, font: { color: '#e5e5e5' } },
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'rgba(0,0,0,0.2)',
@@ -702,6 +713,7 @@ function CorrelationHeatmap({ data, columns }: { data: DatasetRow[]; columns: st
 
     return (
         <Plot
+            useResizeHandler
             data={[
                 {
                     z: correlationMatrix,
@@ -718,12 +730,13 @@ function CorrelationHeatmap({ data, columns }: { data: DatasetRow[]; columns: st
                 },
             ]}
             layout={{
+                autosize: true,
                 title: { text: 'Correlation Heatmap', font: { color: '#e5e5e5' } },
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'rgba(0,0,0,0.2)',
-                xaxis: { color: '#a3a3a3' },
+                xaxis: { color: '#a3a3a3', tickangle: 45 },
                 yaxis: { color: '#a3a3a3' },
-                margin: { t: 50, b: 80, l: 80, r: 30 },
+                margin: { t: 50, b: 100, l: 100, r: 30 },
             } as any}
             config={{ responsive: true, displayModeBar: false }}
             style={{ width: '100%', height: '400px' }}
@@ -746,6 +759,7 @@ function MissingValuesChart({ stats }: { stats: ColumnStats[] }) {
 
     return (
         <Plot
+            useResizeHandler
             data={[
                 {
                     x: colsWithMissing.map((s) => s.name),
@@ -757,11 +771,12 @@ function MissingValuesChart({ stats }: { stats: ColumnStats[] }) {
                 },
             ]}
             layout={{
+                autosize: true,
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'rgba(0,0,0,0.2)',
-                xaxis: { color: '#a3a3a3' },
+                xaxis: { color: '#a3a3a3', tickangle: 45 },
                 yaxis: { title: 'Missing Count', gridcolor: 'rgba(255,255,255,0.1)', color: '#a3a3a3' },
-                margin: { t: 20, b: 80, l: 60, r: 20 },
+                margin: { t: 20, b: 100, l: 60, r: 20 },
             } as any}
             config={{ responsive: true, displayModeBar: false }}
             style={{ width: '100%', height: '300px' }}
@@ -787,6 +802,7 @@ function PairPlotChart({ data, columns }: { data: DatasetRow[]; columns: string[
 
     return (
         <Plot
+            useResizeHandler
             data={[
                 {
                     type: 'splom',
@@ -802,6 +818,7 @@ function PairPlotChart({ data, columns }: { data: DatasetRow[]; columns: string[
                 } as any,
             ]}
             layout={{
+                autosize: true,
                 title: { text: 'Pair Plot (Scatter Matrix)', font: { color: '#e5e5e5' } },
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'rgba(0,0,0,0.2)',
@@ -811,7 +828,7 @@ function PairPlotChart({ data, columns }: { data: DatasetRow[]; columns: string[
                 hovermode: 'closest',
             } as any}
             config={{ responsive: true, displayModeBar: false }}
-            style={{ width: '100%', height: '600px' }}
+            style={{ width: '100%', height: 'min(600px, 80vh)' }}
         />
     );
 }
@@ -871,8 +888,10 @@ function TimeSeriesChart({
 
     return (
         <Plot
+            useResizeHandler
             data={traces}
             layout={{
+                autosize: true,
                 title: {
                     text: dateCol ? `Time Series (by ${dateCol})` : 'Line Chart (by Row Index)',
                     font: { color: '#e5e5e5' },

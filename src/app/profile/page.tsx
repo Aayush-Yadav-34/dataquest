@@ -71,6 +71,7 @@ export default function ProfilePage() {
         xp: userData?.xp ?? session.user.xp ?? 0,
         level: userData?.level ?? session.user.level ?? 1,
         streak: userData?.streak ?? session.user.streak ?? 0,
+        role: userData?.role ?? session.user.role ?? 'member',
     } : profile ? {
         username: userData?.username ?? profile.username,
         email: userData?.email ?? profile.email,
@@ -78,6 +79,7 @@ export default function ProfilePage() {
         xp: userData?.xp ?? profile.xp,
         level: userData?.level ?? profile.level,
         streak: userData?.streak ?? profile.streak,
+        role: userData?.role ?? profile.role ?? 'member',
     } : null;
 
     // Redirect to login if not authenticated
@@ -145,7 +147,7 @@ export default function ProfilePage() {
                                     <p className="text-sm md:text-base text-muted-foreground mb-3 md:mb-2">{user.email}</p>
                                     <div className="flex items-center justify-center md:justify-start gap-2 text-xs md:text-sm text-muted-foreground mb-4 md:mb-0">
                                         <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                                        <span>Member</span>
+                                        <span>{user.role === 'admin' ? 'Admin' : 'Member'}</span>
                                     </div>
                                 </div>
 

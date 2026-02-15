@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
 
         const { data: user, error } = await supabase
             .from('users')
-            .select('username, email, avatar_url, xp, level, streak')
+            .select('username, email, avatar_url, xp, level, streak, role')
             .eq('email', session.user.email)
             .single() as any;
 
@@ -133,6 +133,7 @@ export async function GET(request: NextRequest) {
             xp: user.xp,
             level: user.level,
             streak: user.streak,
+            role: user.role,
             xpProgress: Math.min(100, Math.max(0, xpProgress)),
             xpToNextLevel,
             currentLevelXP,
