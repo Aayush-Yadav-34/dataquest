@@ -107,8 +107,8 @@ export default function SettingsPage() {
             toast.error('Username cannot be empty');
             return;
         }
-        if (trimmed.length < 3 || trimmed.length > 30) {
-            toast.error('Username must be between 3 and 30 characters');
+        if (trimmed.length < 2 || trimmed.length > 20) {
+            toast.error('Username must be between 2 and 20 characters');
             return;
         }
         if (/[^\x20-\x7E]/.test(trimmed)) {

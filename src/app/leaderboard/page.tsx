@@ -178,7 +178,7 @@ export default function LeaderboardPage() {
                             animate={{ opacity: 1 }}
                             className="glass-card overflow-hidden"
                         >
-                            <div className="p-4 border-b border-border/50 grid grid-cols-12 text-sm font-medium text-muted-foreground">
+                            <div className="p-2 sm:p-4 border-b border-border/50 grid grid-cols-12 text-sm font-medium text-muted-foreground">
                                 <div className="col-span-1">Rank</div>
                                 <div className="col-span-6 sm:col-span-5">Player</div>
                                 <div className="col-span-3 sm:col-span-2 text-right">Level</div>
@@ -218,7 +218,7 @@ export default function LeaderboardPage() {
                             animate={{ opacity: 1 }}
                             className="glass-card overflow-hidden"
                         >
-                            <div className="p-4 border-b border-border/50 grid grid-cols-12 text-sm font-medium text-muted-foreground">
+                            <div className="p-2 sm:p-4 border-b border-border/50 grid grid-cols-12 text-sm font-medium text-muted-foreground">
                                 <div className="col-span-1">Rank</div>
                                 <div className="col-span-6 sm:col-span-5">Player</div>
                                 <div className="col-span-3 sm:col-span-2 text-right">Level</div>
@@ -399,7 +399,7 @@ function LeaderboardRow({ entry, index, isHighlighted }: LeaderboardRowProps) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.05 }}
             className={cn(
-                "p-4 grid grid-cols-12 items-center transition-colors",
+                "p-2 sm:p-4 grid grid-cols-12 items-center transition-colors",
                 isHighlighted
                     ? "bg-primary/10 border-l-4 border-primary"
                     : "hover:bg-muted/30",

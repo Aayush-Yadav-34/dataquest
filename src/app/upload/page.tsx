@@ -38,7 +38,10 @@ import {
     Loader2,
     Download,
     Trash2,
+    Grid3X3,
+    Clock,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { sampleDataset } from '@/lib/mockData';
 
@@ -66,7 +69,7 @@ export default function UploadPage() {
     const [columns, setColumns] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [fileName, setFileName] = useState('');
-    const [activeChart, setActiveChart] = useState<'histogram' | 'boxplot' | 'scatter' | 'line' | 'correlation'>('histogram');
+    const [activeChart, setActiveChart] = useState<'histogram' | 'boxplot' | 'scatter' | 'line' | 'correlation' | 'pairplot' | 'timeseries'>('histogram');
     const [selectedColumn, setSelectedColumn] = useState<string>('');
     const [selectedXColumn, setSelectedXColumn] = useState<string>('');
     const [selectedYColumn, setSelectedYColumn] = useState<string>('');
@@ -94,12 +97,36 @@ export default function UploadPage() {
                 setSelectedXColumn(cols[0] || '');
                 setSelectedYColumn(cols[1] || cols[0] || '');
                 setIsLoading(false);
+
+                // Log upload activity
+                logUploadActivity(file.name, validData.length, cols.length);
             },
             error: () => {
                 setIsLoading(false);
+                toast.error('Failed to parse the file');
             },
         });
     }, []);
+
+    // Log upload activity to the backend
+    const logUploadActivity = async (name: string, rows: number, cols: number) => {
+        try {
+            await fetch('/api/users/xp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: 15,
+                    action: {
+                        type: 'upload',
+                        title: `Analyzed ${name}`,
+                        description: `${rows} rows, ${cols} columns`,
+                    },
+                }),
+            });
+        } catch (err) {
+            // Silently fail — activity log is non-critical
+        }
+    };
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
@@ -402,6 +429,8 @@ export default function UploadPage() {
                                                     { id: 'boxplot', label: 'Box Plot', icon: TrendingUp },
                                                     { id: 'scatter', label: 'Scatter', icon: PieChart },
                                                     { id: 'correlation', label: 'Correlation', icon: Table2 },
+                                                    { id: 'pairplot', label: 'Pair Plot', icon: Grid3X3 },
+                                                    { id: 'timeseries', label: 'Time Series', icon: Clock },
                                                 ].map((chart) => (
                                                     <Button
                                                         key={chart.id}
@@ -470,6 +499,17 @@ export default function UploadPage() {
                                             )}
                                             {activeChart === 'correlation' && (
                                                 <CorrelationHeatmap data={data} columns={numericColumns} />
+                                            )}
+                                            {activeChart === 'pairplot' && numericColumns.length >= 2 && (
+                                                <PairPlotChart data={data} columns={numericColumns.slice(0, 5)} />
+                                            )}
+                                            {activeChart === 'pairplot' && numericColumns.length < 2 && (
+                                                <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+                                                    Need at least 2 numeric columns for a pair plot.
+                                                </div>
+                                            )}
+                                            {activeChart === 'timeseries' && (
+                                                <TimeSeriesChart data={data} columns={columns} numericColumns={numericColumns} />
                                             )}
                                         </div>
                                     </CardContent>
@@ -725,6 +765,133 @@ function MissingValuesChart({ stats }: { stats: ColumnStats[] }) {
             } as any}
             config={{ responsive: true, displayModeBar: false }}
             style={{ width: '100%', height: '300px' }}
+        />
+    );
+}
+
+// Pair Plot (Scatter Plot Matrix) using Plotly splom trace
+function PairPlotChart({ data, columns }: { data: DatasetRow[]; columns: string[] }) {
+    // Build dimension arrays for each numeric column
+    const dimensions = columns.map((col) => ({
+        label: col,
+        values: data.map((row) => row[col] as number),
+    }));
+
+    const colors = [
+        'rgb(139, 92, 246)',
+        'rgb(34, 211, 238)',
+        'rgb(251, 146, 60)',
+        'rgb(52, 211, 153)',
+        'rgb(244, 114, 182)',
+    ];
+
+    return (
+        <Plot
+            data={[
+                {
+                    type: 'splom',
+                    dimensions: dimensions,
+                    marker: {
+                        color: colors[0],
+                        size: 4,
+                        opacity: 0.6,
+                        line: { width: 0 },
+                    },
+                    diagonal: { visible: true },
+                    showupperhalf: false,
+                } as any,
+            ]}
+            layout={{
+                title: { text: 'Pair Plot (Scatter Matrix)', font: { color: '#e5e5e5' } },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'rgba(0,0,0,0.2)',
+                font: { color: '#a3a3a3', size: 10 },
+                margin: { t: 50, b: 30, l: 50, r: 30 },
+                dragmode: 'select',
+                hovermode: 'closest',
+            } as any}
+            config={{ responsive: true, displayModeBar: false }}
+            style={{ width: '100%', height: '600px' }}
+        />
+    );
+}
+
+// Time Series chart — auto-detects date columns, falls back to row index
+function TimeSeriesChart({
+    data,
+    columns,
+    numericColumns,
+}: {
+    data: DatasetRow[];
+    columns: string[];
+    numericColumns: string[];
+}) {
+    // Attempt to detect a date/time column
+    const dateCol = columns.find((col) => {
+        const sample = data.slice(0, 10).map((r) => r[col]);
+        return sample.every((v) => {
+            if (v == null || v === '') return false;
+            const d = new Date(String(v));
+            return !isNaN(d.getTime());
+        });
+    });
+
+    const xValues = dateCol
+        ? data.map((row) => new Date(String(row[dateCol])))
+        : data.map((_, i) => i);
+
+    const xAxisTitle = dateCol || 'Row Index';
+
+    if (numericColumns.length === 0) {
+        return (
+            <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+                No numeric columns found for time series.
+            </div>
+        );
+    }
+
+    const colors = [
+        'rgb(139, 92, 246)',
+        'rgb(34, 211, 238)',
+        'rgb(251, 146, 60)',
+        'rgb(52, 211, 153)',
+        'rgb(244, 114, 182)',
+    ];
+
+    // Plot up to 5 numeric columns as separate traces
+    const traces = numericColumns.slice(0, 5).map((col, i) => ({
+        x: xValues,
+        y: data.map((row) => row[col] as number),
+        type: 'scatter' as const,
+        mode: 'lines+markers' as const,
+        name: col,
+        marker: { color: colors[i % colors.length], size: 4 },
+        line: { color: colors[i % colors.length], width: 2 },
+    }));
+
+    return (
+        <Plot
+            data={traces}
+            layout={{
+                title: {
+                    text: dateCol ? `Time Series (by ${dateCol})` : 'Line Chart (by Row Index)',
+                    font: { color: '#e5e5e5' },
+                },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'rgba(0,0,0,0.2)',
+                xaxis: {
+                    title: xAxisTitle,
+                    gridcolor: 'rgba(255,255,255,0.1)',
+                    color: '#a3a3a3',
+                    type: dateCol ? 'date' : 'linear',
+                },
+                yaxis: { title: 'Value', gridcolor: 'rgba(255,255,255,0.1)', color: '#a3a3a3' },
+                margin: { t: 50, b: 60, l: 60, r: 30 },
+                legend: { font: { color: '#a3a3a3' } },
+                showlegend: numericColumns.length > 1,
+            } as any}
+            config={{ responsive: true, displayModeBar: false }}
+            style={{ width: '100%', height: '400px' }}
         />
     );
 }
