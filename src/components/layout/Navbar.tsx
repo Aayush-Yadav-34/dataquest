@@ -208,7 +208,7 @@ export function Navbar() {
                                             </Avatar>
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="w-56 border-white/10" align="end" style={{ background: 'rgba(10, 10, 25, 0.30)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
+                                    <DropdownMenuContent className="w-56 border-white/10" align="end" style={{ background: 'rgba(10, 10, 25, 0.15)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
                                         <DropdownMenuLabel>
                                             <div className="flex flex-col space-y-1">
                                                 <p className="text-sm font-medium">{user.username}</p>
@@ -266,7 +266,7 @@ export function Navbar() {
                                             <Menu className="h-6 w-6" />
                                         </Button>
                                     </SheetTrigger>
-                                    <SheetContent side="right" className="w-80 border-l border-white/10 shadow-2xl" style={{ background: 'rgba(10, 10, 25, 0.30)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
+                                    <SheetContent side="right" className="w-80 border-l border-white/10 shadow-2xl" style={{ background: 'rgba(10, 10, 25, 0.15)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
                                         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                                         <div className="flex flex-col h-full">
                                             {/* User Info */}

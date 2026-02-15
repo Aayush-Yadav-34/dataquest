@@ -113,38 +113,44 @@ export default function ProfilePage() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="glass-card p-8 mb-8"
+                    className="glass-card p-6 md:p-8 mb-6 md:mb-8 max-w-2xl md:max-w-none mx-auto md:mx-0"
                 >
-                    <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                    <div className="flex flex-col items-center md:flex-row md:items-start gap-6 md:gap-8 text-center md:text-left">
                         {/* Avatar */}
-                        <div className="relative">
-                            <Avatar className="w-28 h-28 border-4 border-primary/50 glow">
+                        <div className="relative shrink-0 mb-2 md:mb-0">
+                            <Avatar className="w-24 h-24 md:w-28 md:h-28 border-4 border-primary/50 glow-sm md:glow">
                                 <AvatarImage src={user.avatar} />
-                                <AvatarFallback className="bg-gradient-primary text-white text-3xl">
+                                <AvatarFallback className="bg-gradient-primary text-white text-2xl md:text-3xl">
                                     {user.username.slice(0, 2).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold border-4 border-background">
+                            <div className="absolute -bottom-2 -right-2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-primary flex items-center justify-center text-white text-sm md:text-base font-bold border-4 border-background">
                                 {user.level}
                             </div>
                         </div>
 
                         {/* Info */}
-                        <div className="flex-1">
-                            <div className="flex items-start justify-between">
+                        <div className="w-full flex-1 min-w-0">
+                            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                                 <div>
-                                    <h1 className="text-2xl font-bold mb-1">{user.username}</h1>
-                                    <p className="text-muted-foreground">{user.email}</p>
-                                    <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
-                                        <span className="flex items-center gap-1">
-                                            <Calendar className="w-4 h-4" />
-                                            Member
-                                        </span>
+                                    <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+                                        <h1 className="text-xl md:text-2xl font-bold truncate">{user.username}</h1>
+                                        {/* Mobile Settings Icon */}
+                                        <Link href="/settings" className="md:hidden">
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-full">
+                                                <Settings className="w-3.5 h-3.5" />
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                    <p className="text-sm md:text-base text-muted-foreground mb-3 md:mb-2">{user.email}</p>
+                                    <div className="flex items-center justify-center md:justify-start gap-2 text-xs md:text-sm text-muted-foreground mb-4 md:mb-0">
+                                        <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                        <span>Member</span>
                                     </div>
                                 </div>
 
-                                {/* Settings Button */}
-                                <Link href="/settings">
+                                {/* Desktop Settings Button */}
+                                <Link href="/settings" className="hidden md:inline-flex">
                                     <Button variant="outline" size="sm">
                                         <Settings className="w-4 h-4 mr-2" />
                                         Settings
@@ -153,41 +159,41 @@ export default function ProfilePage() {
                             </div>
 
                             {/* XP Progress */}
-                            <div className="mt-6">
-                                <XPProgressBar currentXP={user.xp} level={user.level} />
+                            <div className="w-full max-w-sm md:max-w-none mx-auto md:mx-0 mt-2 md:mt-6">
+                                <XPProgressBar currentXP={user.xp} level={user.level} size="sm" className="h-2.5 md:h-3" />
                             </div>
                         </div>
                     </div>
 
                     {/* Quick Stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-border/50">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 md:mt-8 pt-6 border-t border-border/50">
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-2 text-primary mb-1">
-                                <Zap className="w-5 h-5" />
-                                <span className="text-2xl font-bold">{user.xp.toLocaleString()}</span>
+                                <Zap className="w-4 h-4 md:w-5 md:h-5" />
+                                <span className="text-xl md:text-2xl font-bold">{user.xp.toLocaleString()}</span>
                             </div>
-                            <p className="text-sm text-muted-foreground">Total XP</p>
+                            <p className="text-xs md:text-sm text-muted-foreground">Total XP</p>
                         </div>
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-2 text-orange-500 mb-1">
-                                <Flame className="w-5 h-5" />
-                                <span className="text-2xl font-bold">{user.streak}</span>
+                                <Flame className="w-4 h-4 md:w-5 md:h-5" />
+                                <span className="text-xl md:text-2xl font-bold">{user.streak}</span>
                             </div>
-                            <p className="text-sm text-muted-foreground">Day Streak</p>
+                            <p className="text-xs md:text-sm text-muted-foreground">Day Streak</p>
                         </div>
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-2 text-yellow-500 mb-1">
-                                <Trophy className="w-5 h-5" />
-                                <span className="text-2xl font-bold">#{globalRank || '-'}</span>
+                                <Trophy className="w-4 h-4 md:w-5 md:h-5" />
+                                <span className="text-xl md:text-2xl font-bold">#{globalRank || '-'}</span>
                             </div>
-                            <p className="text-sm text-muted-foreground">Global Rank</p>
+                            <p className="text-xs md:text-sm text-muted-foreground">Global Rank</p>
                         </div>
                         <div className="text-center">
                             <div className="flex items-center justify-center gap-2 text-emerald-500 mb-1">
-                                <Star className="w-5 h-5" />
-                                <span className="text-2xl font-bold">{earnedBadges.length}</span>
+                                <Star className="w-4 h-4 md:w-5 md:h-5" />
+                                <span className="text-xl md:text-2xl font-bold">{earnedBadges.length}</span>
                             </div>
-                            <p className="text-sm text-muted-foreground">Badges Earned</p>
+                            <p className="text-xs md:text-sm text-muted-foreground">Badges Earned</p>
                         </div>
                     </div>
                 </motion.div>
@@ -289,7 +295,7 @@ export default function ProfilePage() {
                             ) : (
                                 <div className="relative">
                                     {/* Timeline line */}
-                                    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border" />
+                                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
 
                                     <div className="space-y-6">
                                         {activities.map((activity: any, index: number) => {
@@ -300,7 +306,7 @@ export default function ProfilePage() {
                                                     initial={{ opacity: 0, x: -20 }}
                                                     animate={{ opacity: 1, x: 0 }}
                                                     transition={{ delay: index * 0.05 }}
-                                                    className="relative flex gap-4 ml-3"
+                                                    className="relative flex gap-4 ml-1"
                                                 >
                                                     {/* Icon */}
                                                     <div className={cn(
@@ -350,6 +356,6 @@ export default function ProfilePage() {
                     </TabsContent>
                 </Tabs>
             </main>
-        </div>
+        </div >
     );
 }
